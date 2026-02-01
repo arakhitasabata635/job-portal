@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    // 📁 Where your TypeScript source files live
+    "rootDir": "./src",
+
+    // 📦 Where compiled JavaScript files will be generated
+    "outDir": "./dist",
+
+    // 📤 Controls how import/export works in Node.js (ESM + CommonJS support)
+    "module": "NodeNext",
+
+    // 🎯 JavaScript version to output (modern Node supports ES2020 well)
+    "target": "ES2020",
+
+    // 🔍 How TypeScript resolves modules from node_modules (must match NodeNext)
+    "moduleResolution": "NodeNext",
+
+    // 🧠 Adds Node.js global types (process, __dirname, Buffer, fs, path, etc.)
+    "types": ["node"],
+
+    // 🔐 Makes array/object access safer (forces undefined checks)
+    "noUncheckedIndexedAccess": true,
+
+    // 🧩 Optional means optional (prevents assigning undefined explicitly)
+    "exactOptionalPropertyTypes": true,
+
+    // 🧱 Enforces exact file name casing in imports (prevents Linux server bugs)
+    "forceConsistentCasingInFileNames": true,
+
+    // 🚨 Enables all strict type-checking rules (catches bugs early)
+    "strict": true,
+
+    // ⚠️ Warns when importing files that run code automatically (side effects)
+    "noUncheckedSideEffectImports": true,
+
+    // ⚡ Skips type checking inside node_modules for faster builds
+    "skipLibCheck": true
+  }
+}
