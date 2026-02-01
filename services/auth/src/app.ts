@@ -1,5 +1,8 @@
 import express from "express";
+import { globalErrorHandler } from "./middleware/globalError.middleware.js";
 
+const app = express();
+app.use(express.json);
 
-const app = express()
-export default app
+app.use(globalErrorHandler);
+export default app;
