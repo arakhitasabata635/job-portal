@@ -23,9 +23,10 @@ export const registerUserController: controller = async (req, res) => {
     const [user] =
       await sql`INSERT INTO users (name, email, password, phone_number, role) VALUES (${name}, ${email}, ${hashPassword},${phoneNumber}, ${role}) RETURNING 
       user_id ,name,email,phone_number,role,created_at`;
+
     createdUser = user;
-  }
-  if (role === "jobseeker") {
+  } else if (role === "jobseeker") {
+    const file = req.file;
     const [user] =
       await sql`INSERT INTO users (name, email, password, phone_number, role,bio) VALUES (${name}, ${email}, ${hashPassword},${phoneNumber}, ${role},${bio}) RETURNING
        user_id ,name,email,phone_number,role,created_at ,bio`;
