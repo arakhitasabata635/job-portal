@@ -1,9 +1,9 @@
+import { RegisterInput } from "../schemas/auth.schema.js";
 import { resisterUserService } from "../services/authServices.js";
 import { controller } from "../types/controller.js";
-import { resisterUser } from "../types/user.js";
 
 export const registerUserController: controller = async (req, res) => {
-  const { name, email, password, phoneNumber, role }: resisterUser = req.body;
+  const { name, email, password, phoneNumber, role }: RegisterInput = req.body;
 
   let createdUser = await resisterUserService({
     name,

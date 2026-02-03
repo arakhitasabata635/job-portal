@@ -1,5 +1,5 @@
 import { sql } from "../db/index.js";
-import { resisterUser } from "../types/user.js";
+import { RegisterInput } from "../schemas/auth.schema.js";
 import { AppError } from "../utils/errorClass.js";
 import bcrypt from "bcrypt";
 
@@ -9,10 +9,7 @@ export const resisterUserService = async ({
   password,
   phoneNumber,
   role,
-}: resisterUser) => {
-  if (!name || !email || !password || !phoneNumber || !role) {
-    throw new AppError(400, "Please fill all the details.");
-  }
+}: RegisterInput) => {
   const existingUser =
     await sql`SELECT user_id FROM users WHERE email=${email}`;
 
