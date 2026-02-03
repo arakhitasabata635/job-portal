@@ -18,3 +18,7 @@ export const registerUserController: controller = async (req, res) => {
     data: createdUser,
   });
 };
+
+export const loginUserController: controller = async (req, res) => {
+  const { email, password } = req.body;
+};
