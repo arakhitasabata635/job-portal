@@ -5,7 +5,7 @@ import {
   registerUserController,
 } from "../controller/auth.js";
 import { validate } from "../middleware/validate.middleware.js";
-import { registerSchema } from "../schemas/auth.schema.js";
+import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 
 const router = express.Router();
 router.post(
@@ -13,6 +13,6 @@ router.post(
   validate(registerSchema),
   asyncHandler(registerUserController),
 );
-router.post("/register", asyncHandler(loginUserController));
+router.post("/login", validate(loginSchema), asyncHandler(loginUserController));
 
 export default router;
