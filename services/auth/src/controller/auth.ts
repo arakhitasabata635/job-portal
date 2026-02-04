@@ -1,3 +1,4 @@
+import { success } from "zod";
 import { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
 import {
   loginUserService,
@@ -18,6 +19,7 @@ export const registerUserController: controller = async (req, res, next) => {
   });
 
   res.status(201).json({
+    success: true,
     message: "user created successfully",
     data: createdUser,
   });

@@ -22,6 +22,9 @@ export const resisterUserService = async ({
   const [user] =
     await sql`INSERT INTO users (name, email, password, phone_number, role) VALUES (${name}, ${email}, ${hashPassword},${phoneNumber}, ${role}) RETURNING 
       user_id ,name,email,phone_number,role,created_at`;
+  const createUser = {
+    id: user.user_id,
+  };
   return user;
 };
 
