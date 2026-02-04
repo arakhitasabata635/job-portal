@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { RequestHandler } from "express";
 import { controller } from "../types/controller.js";
 
 export const asyncHandler =

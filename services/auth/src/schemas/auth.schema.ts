@@ -1,22 +1,34 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  name: z.string().min(2, "Name must be 3 characters"),
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  phoneNumber: z.coerce
-    .number()
-    .int()
-    .min(1000000000, { message: "Number must be at least 10 digits" })
-    .max(9999999999, { message: "Number cannot exceed 10 digits" }),
-  role: z.enum(["jobseeker", "recruiter"], {
-    message: "Role must be either jobseeker or recruiter",
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .min(3, "Name must be at least 3 characters"),
+
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(6, "Password must be at least 6 characters"),
+
+  phoneNumber: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^[6-9]\d{9}$/, "Invalid phone number"),
+
+  role: z.enum(["jobseeker", "recruiter"]).refine((val) => val !== undefined, {
+    message: "Role is required",
   }),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z.string(),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email({ message: "Invalid email address" }),
+  password: z.string().min(1, "Password is required"),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
