@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/errorClass.js";
+import { sendError } from "../utils/response.js";
 
 export const globalErrorHandler = (
   error: Error,
@@ -13,8 +14,5 @@ export const globalErrorHandler = (
     statusCode = error.statusCode;
     message = error.message;
   }
-  res.status(statusCode).json({
-    success: false,
-    message: message,
-  });
+  return sendError(res, message, statusCode);
 };
