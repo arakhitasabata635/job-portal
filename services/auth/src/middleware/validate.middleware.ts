@@ -5,6 +5,7 @@ import { sendError } from "../utils/response.js";
 
 export const validate = (schema: z.ZodTypeAny) =>
   asyncHandler(async (req, res, next) => {
+    console.log(req.body);
     const result = schema.safeParse(req.body);
 
     if (!result.success) {
