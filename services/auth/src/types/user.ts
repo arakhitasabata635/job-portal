@@ -1,7 +1,7 @@
 export type UserRole = "jobseeker" | "recruiter";
 
 export interface UserRow {
-  user_id: string;
+  user_id: number;
   name: string;
   email: string;
   phone_number: string;
