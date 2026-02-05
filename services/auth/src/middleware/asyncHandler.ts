@@ -5,7 +5,7 @@ export const asyncHandler =
   (controller: controller): RequestHandler =>
   async (req, res, next) => {
     try {
-      await controller(req, res, next);
+      const result = await controller(req, res, next);
     } catch (error: any) {
       next(error);
     }
