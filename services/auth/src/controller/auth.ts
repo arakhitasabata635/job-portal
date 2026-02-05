@@ -1,3 +1,4 @@
+import { success } from "zod";
 import {
   loginUserService,
   registerUserService,
@@ -28,11 +29,19 @@ export const loginUserController: controller = async (req, res, next) => {
     })
     .status(200)
     .json({
+      success: true,
       data: {
         userDTO,
         accessToken,
       },
-      accessToken,
       message: "login successfully",
     });
+};
+
+export const refreshAccessTokenController: controller = async (
+  req,
+  res,
+  next,
+) => {
+  console.log(req.cookies);
 };

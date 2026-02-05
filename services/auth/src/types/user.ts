@@ -12,6 +12,7 @@ export interface UserDTO {
   id: number;
   name: string;
   email: string;
+  isEmailVerify?: boolean;
   phoneNumber: string;
   role: UserRole;
   createdAt: Date;

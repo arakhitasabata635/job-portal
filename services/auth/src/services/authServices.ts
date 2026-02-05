@@ -43,7 +43,7 @@ export const registerUserService = async ({
 
 export const loginUserService = async ({ email, password }: LoginInput) => {
   const [user] = await sql`
-    SELECT user_id,name,email,password,role,phone_number,created_at FROM users WHERE email = ${email};
+    SELECT user_id,name,email,email_varified,password,role,phone_number,created_at FROM users WHERE email = ${email};
   `;
   if (!user) throw new AppError(401, "Invalid email or password");
   const passMatch = await bcrypt.compare(password, user.password);
@@ -52,6 +52,7 @@ export const loginUserService = async ({ email, password }: LoginInput) => {
     id: user.user_id,
     name: user.name,
     email: user.email,
+    isEmailVerify: user.email_varified,
     phoneNumber: user.phone_number,
     role: user.role,
     createdAt: user.created_at,
