@@ -3,7 +3,13 @@ import { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
 import { UserDTO } from "../types/user.js";
 import { AppError } from "../utils/errorClass.js";
 import bcrypt from "bcrypt";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt.js";
+import { verify } from "jsonwebtoken";
+import { error } from "node:console";
 
 export const registerUserService = async ({
   name,
@@ -60,4 +66,22 @@ export const loginUserService = async ({ email, password }: LoginInput) => {
   const accessToken = generateAccessToken(userDTO.email, userDTO.role);
   const refreshToken = generateRefreshToken(userDTO.email);
   return { userDTO, accessToken, refreshToken };
+};
+
+export const createAccessTokenService = async (refreshToken: string) => {
+  const decoded = verifyRefreshToken(refreshToken) as { email: string };
+  if (!decoded.email) {
+    throw new AppError(400, "Invalid cookie ");
+  }
+  const [user] = await sql`
+  SELECT user_id, name, email, role, phone_number, created_at
+  FROM users
+  WHERE email = ${decoded.email};
+`;
+  if (!user) {
+    throw new AppError(401, "User no longer exists");
+  }
+  const accessToken = generateAccessToken(user.email, user.role);
+  refreshToken = generateRefreshToken(user.email);
+  return accessToken;
 };

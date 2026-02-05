@@ -1,10 +1,12 @@
 import {
+  createAccessTokenService,
   loginUserService,
   registerUserService,
 } from "../services/authServices.js";
 import { controller } from "../types/controller.js";
 import { sendSuccess } from "../utils/response.js";
 import { UserDTO } from "../types/user.js";
+import { AppError } from "../utils/errorClass.js";
 
 type LoginRes = {
   data: UserDTO;
@@ -46,5 +48,9 @@ export const refreshAccessTokenController: controller = async (
   res,
   next,
 ) => {
-  console.log(req.cookies);
+  const refreshToken: string | undefined = req.cookies["refreshToken"];
+  if (!refreshToken)
+    throw new AppError(400, "Refresh token is missing or null.");
+  const accessToken = await createAccessTokenService(refreshToken);
+  console.log(accessToken);
 };

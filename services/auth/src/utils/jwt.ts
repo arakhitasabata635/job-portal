@@ -4,7 +4,7 @@ const jwtSecreate: string = process.env.JWT_ACCESS_SECRET as string;
 const refreshSecret = process.env.JWT_REFRESH_SECRET as string;
 
 export const generateAccessToken = (email: string, role: string) => {
-  return jwt.sign({ email }, jwtSecreate, { expiresIn: "1h" });
+  return jwt.sign({ email, role }, jwtSecreate, { expiresIn: "1h" });
 };
 
 export const generateRefreshToken = (email: string) => {
