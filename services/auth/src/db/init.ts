@@ -26,7 +26,8 @@ async function initDb() {
   profile_pic VARCHAR(255),
   profile_pic_public_id VARCHAR(255),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  subscription TIMESTAMPTZ
+  subscription TIMESTAMPTZ,
+  refresh_token VARCHAR(255)
   )
   `;
 

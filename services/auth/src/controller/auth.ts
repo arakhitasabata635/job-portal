@@ -52,5 +52,5 @@ export const refreshAccessTokenController: controller = async (
   if (!refreshToken)
     throw new AppError(400, "Refresh token is missing or null.");
   const accessToken = await createAccessTokenService(refreshToken);
-  console.log(accessToken);
+  return sendSuccess<{}>(res, {}, "token created succefully", 200);
 };

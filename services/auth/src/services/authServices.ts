@@ -63,25 +63,44 @@ export const loginUserService = async ({ email, password }: LoginInput) => {
     role: user.role,
     createdAt: user.created_at,
   };
-  const accessToken = generateAccessToken(userDTO.email, userDTO.role);
-  const refreshToken = generateRefreshToken(userDTO.email);
+  const accessToken = generateAccessToken(
+    userDTO.id,
+    userDTO.email,
+    userDTO.role,
+  );
+  const refreshToken = generateRefreshToken(userDTO.id, userDTO.email);
+  await sql`
+  UPDATE users
+  SET refresh_token = ${refreshToken}
+  WHERE user_id = ${userDTO.id};
+`;
   return { userDTO, accessToken, refreshToken };
 };
 
 export const createAccessTokenService = async (refreshToken: string) => {
-  const decoded = verifyRefreshToken(refreshToken) as { email: string };
-  if (!decoded.email) {
+  const decoded = verifyRefreshToken(refreshToken) as {
+    id: number;
+    email: string;
+  };
+  if (!decoded.id) {
     throw new AppError(400, "Invalid cookie ");
   }
   const [user] = await sql`
-  SELECT user_id, name, email, role, phone_number, created_at
+  SELECT user_id, name, email, role, phone_number, created_at,refresh_token
   FROM users
-  WHERE email = ${decoded.email};
+  WHERE user_id = ${decoded.id};
 `;
   if (!user) {
     throw new AppError(401, "User no longer exists");
   }
-  const accessToken = generateAccessToken(user.email, user.role);
-  refreshToken = generateRefreshToken(user.email);
+  if (user.refresh_token !== refreshToken)
+    throw new AppError(401, "token not valid");
+  const accessToken = generateAccessToken(user.user_id, user.email, user.role);
+  refreshToken = generateRefreshToken(user.user_id, user.email);
+  await sql`
+  UPDATE users
+  SET refresh_token = ${refreshToken}
+  WHERE user_id = ${user.user_id};
+`;
   return accessToken;
 };
