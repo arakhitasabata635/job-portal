@@ -10,11 +10,11 @@ export const globalErrorHandler = (
 ) => {
   let message = "Internal server error";
   let statusCode = 500;
-  console.log(error);
+  // console.log(error);
   if (error instanceof AppError) {
     statusCode = error.statusCode;
     message = error.message;
   }
-  console.log(message);
+  // console.log(message);
   return sendError(res, message, statusCode);
 };

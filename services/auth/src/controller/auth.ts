@@ -30,16 +30,17 @@ export const registerUserController: controller = async (req, res, next) => {
 };
 
 export const loginUserController: controller = async (req, res, next) => {
+  if (req.cookies["refreshToken"])
+    res.clearCookie("refreshToken", cookieOption);
   const { userDTO, accessToken, refreshToken } = await loginUserService(
     req.body,
   );
-
   res.cookie("refreshToken", refreshToken, cookieOption);
 
   return sendSuccess<LoginRes>(
     res,
     { data: userDTO, accessToken },
-    "user created successfully",
+    "user Login successfully",
     200,
   );
 };
@@ -53,6 +54,8 @@ export const refreshAccessTokenController: controller = async (
   if (!refreshToken)
     throw new AppError(400, "Refresh token is missing or null.");
   res.clearCookie("refreshToken", cookieOption);
-  const accessToken = await createAccessTokenService(refreshToken);
+  const { accessToken, newRefreshToken } =
+    await createAccessTokenService(refreshToken);
+  res.cookie("refreshToken", newRefreshToken, cookieOption);
   return sendSuccess<{}>(res, { accessToken }, "token created succefully", 200);
 };

@@ -88,18 +88,27 @@ export const createAccessTokenService = async (refreshToken: string) => {
   if (!user) {
     throw new AppError(401, "User no longer exists");
   }
-  if (user.refresh_token !== refreshToken)
+  if (user.refresh_token !== refreshToken) {
+    await sql`
+    UPDATE users
+    SET refresh_token = NULL
+    WHERE user_id = ${user.user_id};
+`;
     throw new AppError(401, "token not valid");
+  }
   const accessToken = generateAccessToken({
     id: user.user_id,
     email: user.email,
     role: user.role,
   });
-  refreshToken = generateRefreshToken({ id: user.user_id, email: user.email });
+  const newRefreshToken = generateRefreshToken({
+    id: user.user_id,
+    email: user.email,
+  });
   await sql`
   UPDATE users
-  SET refresh_token = ${refreshToken}
+  SET refresh_token = ${newRefreshToken}
   WHERE user_id = ${user.user_id};
 `;
-  return accessToken;
+  return { accessToken, newRefreshToken };
 };
