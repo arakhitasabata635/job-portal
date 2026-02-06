@@ -1,24 +1,41 @@
 import jwt from "jsonwebtoken";
+import { AppError } from "./errorClass.js";
 
-const jwtSecreate: string = process.env.JWT_ACCESS_SECRET as string;
+const accessSecreate: string = process.env.JWT_ACCESS_SECRET as string;
 const refreshSecret = process.env.JWT_REFRESH_SECRET as string;
 
-export const generateAccessToken = (
-  id: number,
-  email: string,
-  role: string,
-) => {
-  return jwt.sign({ id, email, role }, jwtSecreate, { expiresIn: "1h" });
+interface JwtPayload {
+  id: number;
+  email: string;
+  role?: string;
+}
+
+export const generateAccessToken = (data: JwtPayload) => {
+  return jwt.sign(data, accessSecreate, { expiresIn: "1h" });
 };
 
-export const generateRefreshToken = (id: number, email: string) => {
-  return jwt.sign({ id, email }, refreshSecret, { expiresIn: "7h" });
+export const generateRefreshToken = (data: JwtPayload) => {
+  return jwt.sign(data, refreshSecret, { expiresIn: "7h" });
 };
 
-export const verifyAccessToken = (token: string) => {
-  return jwt.verify(token, jwtSecreate);
+export const verifyAccessToken = (token: string): JwtPayload => {
+  try {
+    return jwt.verify(token, accessSecreate) as JwtPayload;
+  } catch (error: any) {
+    if (error.name === "TokenExpiredError") {
+      throw new AppError(401, "Access token expired");
+    }
+    throw new AppError(401, "Invalid access token");
+  }
 };
 
-export const verifyRefreshToken = (token: string) => {
-  return jwt.verify(token, refreshSecret);
+export const verifyRefreshToken = (token: string): JwtPayload => {
+  try {
+    return jwt.verify(token, refreshSecret) as JwtPayload;
+  } catch (error: any) {
+    if (error.name === "TokenExpiredError") {
+      throw new AppError(401, "Refresh token expired");
+    }
+    throw new AppError(401, "Invalid refresh token");
+  }
 };
