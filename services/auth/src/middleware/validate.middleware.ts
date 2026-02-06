@@ -14,7 +14,7 @@ export const validate = (schema: z.ZodTypeAny) =>
           field: err.path,
           message: err.message,
         }));
-        return sendError(res, message, error, 400);
+        return sendError(res, message, 400, error);
       }
 
       throw new AppError(400, "Validation failed");

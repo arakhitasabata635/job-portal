@@ -17,8 +17,8 @@ export const sendSuccess = <T>(
 export const sendError = (
   res: Response<ApiResponse<null>>,
   message: string,
-  error?: unknown,
   statusCode = 500,
+  error?: unknown,
 ) => {
   return res.status(statusCode).json({
     success: false,
