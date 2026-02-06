@@ -114,14 +114,12 @@ export const createAccessTokenService = async (refreshToken: string) => {
 };
 
 export const logoutService = async (refreshToken: string) => {
-  console.log(refreshToken);
   const [result] = await sql`
   UPDATE users
   SET refresh_token = NULL
   WHERE refresh_token = ${refreshToken}
   RETURNING user_id;
 `;
-  console.log("result", result);
   if (!result) {
     throw new AppError(204, "Already logout");
   }

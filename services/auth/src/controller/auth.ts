@@ -65,7 +65,6 @@ export const logoutControler: controller = async (req, res, next) => {
   const refreshToken: string | undefined = req.cookies["refreshToken"];
   if (!refreshToken) throw new AppError(204, "User is already logout");
   const result = await logoutService(refreshToken);
-  console.log(result);
   res.clearCookie("refreshToken", cookieOption);
   return sendSuccess<{}>(res, {}, "Logout succefully", 204);
 };
