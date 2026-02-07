@@ -36,8 +36,8 @@ export const loginUserController: controller = async (req, res, next) => {
   const { userDTO, accessToken, refreshToken } = await loginUserService(
     req.body,
   );
-  res.cookie("refreshToken", refreshToken, cookieOption);
 
+  res.cookie("refreshToken", refreshToken, cookieOption);
   return sendSuccess<LoginRes>(
     res,
     { data: userDTO, accessToken },

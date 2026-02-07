@@ -4,7 +4,7 @@ import router from "./routes/index.js";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
+import { authLimiter } from "./utils/authLimiter.js";
 
 const app = express();
 app.use(helmet());
@@ -21,22 +21,7 @@ app.use((req, res, next) => {
   next();
 });
 // limit the attempts
-app.use(
-  "/api/auth",
-  rateLimit({
-    windowMs: 60 * 60 * 1000,
-    max: 5, // Limit each IP to 5 login attempts
-    standardHeaders: true, // Return rate limit info in headers
-    legacyHeaders: false, // it gave the value with out x-
-    handler: (req, res, next, options) => {
-      res.status(options.statusCode).json({
-        success: false,
-        message: "Too many login attempts. Please try again after 1 houre.",
-        retryAfter: res.getHeader("Retry-After"), // Tells them how many seconds to wait
-      });
-    },
-  }),
-);
+app.use("/api/auth", authLimiter);
 app.use("/api/auth", router);
 
 app.use((req, res) => {
