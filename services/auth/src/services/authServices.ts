@@ -45,7 +45,10 @@ export const registerUserService = async ({
   return userDTO;
 };
 
-export const loginUserService = async ({ email, password }: LoginInput) => {
+export const loginUserService = async (
+  { email, password }: LoginInput,
+  sessionInfo: { deviceInfo: string; ipAddress: string },
+) => {
   const [user] = await sql`
     SELECT user_id,name,email,email_varified,password,role,phone_number,created_at FROM users WHERE email = ${email};
   `;
@@ -70,10 +73,11 @@ export const loginUserService = async ({ email, password }: LoginInput) => {
     id: userDTO.id,
     email: userDTO.email,
   });
+  const hashRefresh = await bcrypt.hash(refreshToken, 10);
   await sql`
-  UPDATE users
-  SET refresh_token = ${refreshToken}
-  WHERE user_id = ${userDTO.id};
+  INSERT INTO refresh_tokens (user_id, token_hash, device_info, ip_address)
+  VALUES (${userDTO.id}, ${hashRefresh}, ${sessionInfo.deviceInfo}, ${sessionInfo.ipAddress})
+ ;
 `;
   return { userDTO, accessToken, refreshToken };
 };

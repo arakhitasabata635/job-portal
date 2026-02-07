@@ -26,8 +26,7 @@ async function initDb() {
   profile_pic VARCHAR(255),
   profile_pic_public_id VARCHAR(255),
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  subscription TIMESTAMPTZ,
-  refresh_token VARCHAR(255)
+  subscription TIMESTAMPTZ
   )
   `;
 
@@ -44,6 +43,17 @@ async function initDb() {
   PRIMARY KEY (user_id, skill_id)
   )
   `;
+    await sql`
+  CREATE TABLE IF NOT EXISTS refresh_tokens(
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id INTEGER NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
+  token_hash TEXT NOT NULL,
+  device_info TEXT,
+  ip_address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+  CONSTRAINT unique_token_hash UNIQUE (token_hash)
+  )`;
     console.log("✅ database table checked and created");
   } catch (error) {
     console.log("❌ ERROR INITIALIZING DATABASE", error);

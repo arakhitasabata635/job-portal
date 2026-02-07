@@ -38,8 +38,11 @@ export const registerUserController: controller = async (req, res, next) => {
 export const loginUserController: controller = async (req, res, next) => {
   if (req.cookies["refreshToken"])
     res.clearCookie("refreshToken", clearCookieOption);
+  const deviceInfo = req.headers["user-agent"] ?? "unknown";
+  const ipAddress = req.ip || "";
   const { userDTO, accessToken, refreshToken } = await loginUserService(
     req.body,
+    { deviceInfo, ipAddress },
   );
 
   res.cookie("refreshToken", refreshToken, cookieOption);

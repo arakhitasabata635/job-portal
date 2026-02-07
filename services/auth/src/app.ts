@@ -7,6 +7,7 @@ import cors from "cors";
 import { authLimiter } from "./utils/authLimiter.js";
 
 const app = express();
+app.set("trust proxy", 1);
 app.use(helmet());
 app.use(
   cors({
