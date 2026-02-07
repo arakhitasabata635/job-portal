@@ -133,6 +133,9 @@ export const logoutService = async (refreshToken: string) => {
     throw new AppError(204, "Already logout");
   }
   const result = await bcrypt.compare(refreshToken, session.token_hash);
+  if (!result) {
+    throw new AppError(401, "Invalid or Wrong session ID.");
+  }
   return await sql`
   DELETE FROM refresh_tokens WHERE session_id = ${session.session_id}`;
 };
