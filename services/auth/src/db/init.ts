@@ -45,7 +45,7 @@ async function initDb() {
   `;
     await sql`
   CREATE TABLE IF NOT EXISTS refresh_tokens(
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID PRIMARY KEY NOT NULL,
   user_id INTEGER NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
   token_hash TEXT NOT NULL,
   device_info TEXT,

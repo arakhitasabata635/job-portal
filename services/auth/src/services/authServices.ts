@@ -8,6 +8,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
+import { randomUUID } from "node:crypto";
 
 export const registerUserService = async ({
   name,
@@ -64,19 +65,24 @@ export const loginUserService = async (
     role: user.role,
     createdAt: user.created_at,
   };
+
   const accessToken = generateAccessToken({
     id: userDTO.id,
     email: userDTO.email,
     role: userDTO.role,
   });
+
+  const sessionId = randomUUID(); // create rendom session id
   const refreshToken = generateRefreshToken({
     id: userDTO.id,
-    email: userDTO.email,
+    session_id: sessionId,
   });
+
   const hashRefresh = await bcrypt.hash(refreshToken, 10);
+
   await sql`
-  INSERT INTO refresh_tokens (user_id, token_hash, device_info, ip_address)
-  VALUES (${userDTO.id}, ${hashRefresh}, ${sessionInfo.deviceInfo}, ${sessionInfo.ipAddress})
+  INSERT INTO refresh_tokens (session_id,user_id, token_hash, device_info, ip_address)
+  VALUES (${sessionId},${userDTO.id}, ${hashRefresh}, ${sessionInfo.deviceInfo}, ${sessionInfo.ipAddress})
  ;
 `;
   return { userDTO, accessToken, refreshToken };
@@ -107,7 +113,7 @@ export const createAccessTokenService = async (refreshToken: string) => {
   });
   const newRefreshToken = generateRefreshToken({
     id: user.user_id,
-    email: user.email,
+    session_id: user.email,
   });
   await sql`
   UPDATE users
@@ -118,14 +124,15 @@ export const createAccessTokenService = async (refreshToken: string) => {
 };
 
 export const logoutService = async (refreshToken: string) => {
-  const [result] = await sql`
-  UPDATE users
-  SET refresh_token = NULL
-  WHERE refresh_token = ${refreshToken}
-  RETURNING user_id;
+  const decode = verifyRefreshToken(refreshToken);
+
+  const [session] = await sql`
+ SELECT * FROM refresh_tokens WHERE session_id= ${decode.session_id}
 `;
-  if (!result) {
+  if (!session) {
     throw new AppError(204, "Already logout");
   }
-  return result;
+  const result = await bcrypt.compare(refreshToken, session.token_hash);
+  return await sql`
+  DELETE FROM refresh_tokens WHERE session_id = ${session.session_id}`;
 };

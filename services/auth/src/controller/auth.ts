@@ -60,11 +60,15 @@ export const refreshAccessTokenController: controller = async (
   next,
 ) => {
   const refreshToken: string | undefined = req.cookies["refreshToken"];
+
   if (!refreshToken)
     throw new AppError(400, "Refresh token is missing or null.");
+
   res.clearCookie("refreshToken", clearCookieOption);
+
   const { accessToken, newRefreshToken } =
     await createAccessTokenService(refreshToken);
+
   res.cookie("refreshToken", newRefreshToken, cookieOption);
   return sendSuccess<{}>(res, { accessToken }, "token created succefully", 200);
 };
@@ -72,7 +76,15 @@ export const refreshAccessTokenController: controller = async (
 export const logoutControler: controller = async (req, res, next) => {
   const refreshToken: string | undefined = req.cookies["refreshToken"];
   if (!refreshToken) throw new AppError(204, "User is already logout");
+
   const result = await logoutService(refreshToken);
+  if (!result)
+    throw new AppError(
+      500,
+      "Logout failed due to a server error. Please try again or clear your browser cookies.",
+    );
+
   res.clearCookie("refreshToken", clearCookieOption);
+
   return sendSuccess<{}>(res, {}, "Logout succefully", 204);
 };

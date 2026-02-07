@@ -4,23 +4,27 @@ import { AppError } from "./errorClass.js";
 const accessSecreate: string = process.env.JWT_ACCESS_SECRET as string;
 const refreshSecret = process.env.JWT_REFRESH_SECRET as string;
 
-interface JwtPayload {
+interface RefreshPayload {
+  id: number;
+  session_id: string;
+}
+interface AccessPayload {
   id: number;
   email: string;
-  role?: string;
+  role: string;
 }
 
-export const generateAccessToken = (data: JwtPayload) => {
+export const generateAccessToken = (data: AccessPayload) => {
   return jwt.sign(data, accessSecreate, { expiresIn: "1h" });
 };
 
-export const generateRefreshToken = (data: JwtPayload) => {
+export const generateRefreshToken = (data: RefreshPayload) => {
   return jwt.sign(data, refreshSecret, { expiresIn: "7h" });
 };
 
-export const verifyAccessToken = (token: string): JwtPayload => {
+export const verifyAccessToken = (token: string): AccessPayload => {
   try {
-    return jwt.verify(token, accessSecreate) as JwtPayload;
+    return jwt.verify(token, accessSecreate) as AccessPayload;
   } catch (error: any) {
     if (error.name === "TokenExpiredError") {
       throw new AppError(401, "Access token expired");
@@ -29,9 +33,9 @@ export const verifyAccessToken = (token: string): JwtPayload => {
   }
 };
 
-export const verifyRefreshToken = (token: string): JwtPayload => {
+export const verifyRefreshToken = (token: string): RefreshPayload => {
   try {
-    return jwt.verify(token, refreshSecret) as JwtPayload;
+    return jwt.verify(token, refreshSecret) as RefreshPayload;
   } catch (error: any) {
     if (error.name === "TokenExpiredError") {
       throw new AppError(401, "Refresh token expired");
