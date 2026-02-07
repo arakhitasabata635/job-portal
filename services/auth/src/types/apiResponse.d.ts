@@ -1,3 +1,7 @@
+export interface ValidationError {
+  field: string;
+  message: string;
+}
 export interface ApiSuccess<T> {
   success: true;
   message: string;
@@ -7,7 +11,7 @@ export interface ApiSuccess<T> {
 export interface ApiError {
   success: false;
   message: string;
-  error?: unknown;
+  errors?: ValidationError[];
 }
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;

@@ -10,11 +10,11 @@ export const validate = (schema: z.ZodTypeAny) =>
     if (!result.success) {
       if (result.error instanceof ZodError) {
         const message = "Validation faield";
-        const error = result.error.issues.map((err) => ({
-          field: err.path,
+        const errors = result.error.issues.map((err) => ({
+          field: err.path[0] as string,
           message: err.message,
         }));
-        return sendError(res, message, 400, error);
+        return sendError(res, message, 400, errors);
       }
 
       throw new AppError(400, "Validation failed");

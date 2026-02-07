@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { ApiResponse } from "../types/apiResponse.js";
+import { ApiResponse, ValidationError } from "../types/apiResponse.js";
 
 export const sendSuccess = <T>(
   res: Response<ApiResponse<T>>,
@@ -18,11 +18,11 @@ export const sendError = (
   res: Response<ApiResponse<null>>,
   message: string,
   statusCode = 500,
-  error?: unknown,
+  errors?: ValidationError[],
 ) => {
   return res.status(statusCode).json({
     success: false,
     message,
-    error,
+    ...(errors && { errors }),
   });
 };
