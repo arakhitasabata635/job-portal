@@ -9,6 +9,7 @@ import { sendSuccess } from "../utils/response.js";
 import { UserDTO } from "../types/user.js";
 import { AppError } from "../utils/errorClass.js";
 import { CookieOptions } from "express";
+import { getDeviceInfo, getIp } from "../utils/getApiDetails.js";
 
 type LoginRes = {
   user: UserDTO;
@@ -38,8 +39,8 @@ export const registerUserController: controller = async (req, res, next) => {
 export const loginUserController: controller = async (req, res, next) => {
   if (req.cookies["refreshToken"])
     res.clearCookie("refreshToken", clearCookieOption);
-  const deviceInfo = req.headers["user-agent"] ?? "unknown";
-  const ipAddress = req.ip || "";
+  const deviceInfo = getDeviceInfo(req);
+  const ipAddress = getIp(req);
   const { userDTO, accessToken, refreshToken } = await loginUserService(
     req.body,
     { deviceInfo, ipAddress },

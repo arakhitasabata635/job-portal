@@ -4,12 +4,12 @@ import { AppError } from "./errorClass.js";
 const accessSecreate: string = process.env.JWT_ACCESS_SECRET as string;
 const refreshSecret = process.env.JWT_REFRESH_SECRET as string;
 
-interface RefreshPayload {
-  id: number;
-  session_id: string;
+export interface RefreshPayload {
+  userId: number;
+  sessionId: string;
 }
 interface AccessPayload {
-  id: number;
+  userId: number;
   email: string;
   role: string;
 }

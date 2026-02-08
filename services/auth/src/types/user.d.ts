@@ -9,7 +9,7 @@ export interface UserRow {
   created_at: Date;
 }
 export interface UserDTO {
-  id: number;
+  userId: number;
   name: string;
   email: string;
   isEmailVerify?: boolean;

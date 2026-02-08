@@ -28,7 +28,7 @@ export const registerUserService = async ({
 
   const [user] =
     await sql`INSERT INTO users (name, email, password, phone_number, role) VALUES (${name}, ${email}, ${hashPassword},${phoneNumber}, ${role}) RETURNING 
-      user_id ,name,email,phone_number,role,created_at`;
+      user_id ,name,email,email_verified,phone_number,role,created_at`;
   if (!user) {
     throw new AppError(
       500,
@@ -36,9 +36,10 @@ export const registerUserService = async ({
     );
   }
   const userDTO: UserDTO = {
-    id: user.user_id,
+    userId: user.user_id,
     name: user.name,
     email: user.email,
+    isEmailVerify: user.email_verified,
     phoneNumber: user.phone_number,
     role: user.role,
     createdAt: user.created_at,
@@ -48,7 +49,7 @@ export const registerUserService = async ({
 
 export const loginUserService = async (
   { email, password }: LoginInput,
-  sessionInfo: { deviceInfo: string; ipAddress: string },
+  sessionInfo: { deviceInfo: string; ipAddress: string | null },
 ) => {
   const [user] = await sql`
     SELECT user_id,name,email,email_varified,password,role,phone_number,created_at FROM users WHERE email = ${email};
@@ -57,7 +58,7 @@ export const loginUserService = async (
   const passMatch = await bcrypt.compare(password, user.password);
   if (!passMatch) throw new AppError(401, "Invalid email or password");
   const userDTO: UserDTO = {
-    id: user.user_id,
+    userId: user.user_id,
     name: user.name,
     email: user.email,
     isEmailVerify: user.email_varified,
@@ -67,58 +68,69 @@ export const loginUserService = async (
   };
 
   const accessToken = generateAccessToken({
-    id: userDTO.id,
+    userId: userDTO.userId,
     email: userDTO.email,
     role: userDTO.role,
   });
 
   const sessionId = randomUUID(); // create rendom session id
   const refreshToken = generateRefreshToken({
-    id: userDTO.id,
-    session_id: sessionId,
+    userId: userDTO.userId,
+    sessionId,
   });
 
   const hashRefresh = await bcrypt.hash(refreshToken, 10);
 
   await sql`
   INSERT INTO refresh_tokens (session_id,user_id, token_hash, device_info, ip_address)
-  VALUES (${sessionId},${userDTO.id}, ${hashRefresh}, ${sessionInfo.deviceInfo}, ${sessionInfo.ipAddress})
+  VALUES (${sessionId},${userDTO.userId}, ${hashRefresh}, ${sessionInfo.deviceInfo}, ${sessionInfo.ipAddress})
  ;
 `;
   return { userDTO, accessToken, refreshToken };
 };
 
 export const createAccessTokenService = async (refreshToken: string) => {
+  //valid token
   const decoded = verifyRefreshToken(refreshToken);
-  const [user] = await sql`
-  SELECT user_id, name, email, role, phone_number, created_at,refresh_token
-  FROM users
-  WHERE user_id = ${decoded.id};
+  const [session] = await sql`
+  SELECT *
+  FROM refresh_tokens
+  WHERE user_id = ${decoded.sessionId};
 `;
-  if (!user) {
-    throw new AppError(401, "User no longer exists");
+  //session not in db
+  if (!session) {
+    throw new AppError(401, "Session compromised.");
   }
-  if (user.refresh_token !== refreshToken) {
-    await sql`
-    UPDATE users
-    SET refresh_token = NULL
-    WHERE user_id = ${user.user_id};
-`;
-    throw new AppError(401, "token not valid");
+
+  const match = await bcrypt.compare(refreshToken, session.token_hash);
+  // bcrypt compare fail
+  if (!match) {
+    await sql`DELETE * FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+    throw new AppError(401, "Session reuse detected. Login again.");
   }
+
+  //FIND email role
+  const [user] =
+    await sql`SELECT email,role FROM users WHERE user_id=${decoded.userId} `;
+  if (!user) throw new AppError(404, "User no longer exist");
   const accessToken = generateAccessToken({
-    id: user.user_id,
+    userId: session.user_id,
     email: user.email,
     role: user.role,
   });
-  const newRefreshToken = generateRefreshToken({
-    id: user.user_id,
-    session_id: user.email,
+
+  refreshToken = generateRefreshToken({
+    userId: session.userId,
+    sessionId: session.session_id,
   });
+
+  const newRefreshToken = await bcrypt.hash(refreshToken, 10);
   await sql`
-  UPDATE users
-  SET refresh_token = ${newRefreshToken}
-  WHERE user_id = ${user.user_id};
+  UPDATE refresh_tokens
+  SET token_hash = ${newRefreshToken},
+  created_at= ${new Date(Date.now())}
+  expires_at = ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
+  WHERE session_id = ${session.session_id};
 `;
   return { accessToken, newRefreshToken };
 };
@@ -127,7 +139,7 @@ export const logoutService = async (refreshToken: string) => {
   const decode = verifyRefreshToken(refreshToken);
 
   const [session] = await sql`
- SELECT * FROM refresh_tokens WHERE session_id= ${decode.session_id}
+ SELECT * FROM refresh_tokens WHERE session_id= ${decode.sessionId}
 `;
   if (!session) {
     throw new AppError(204, "Already logout");
