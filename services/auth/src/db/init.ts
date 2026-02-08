@@ -2,6 +2,7 @@ import { sql } from "./index.js";
 
 async function initDb() {
   try {
+    await sql`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`;
     await sql`
   DO $$
   BEGIN
@@ -13,7 +14,7 @@ async function initDb() {
   `;
     await sql`
   CREATE TABLE IF NOT EXISTS users (
-  user_id SERIAL PRIMARY KEY,
+  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   email  VARCHAR(255) NOT NULL,
   email_varified BOOLEAN DEFAULT FALSE,
@@ -38,22 +39,28 @@ async function initDb() {
   `;
     await sql`
   CREATE TABLE IF NOT EXISTS user_skills(
-  user_id INTEGER NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
   skill_id INTEGER NOT NULL REFERENCES skills(skill_id)ON DELETE CASCADE,
   PRIMARY KEY (user_id, skill_id)
   )
   `;
     await sql`
   CREATE TABLE IF NOT EXISTS refresh_tokens(
-  session_id UUID PRIMARY KEY NOT NULL,
-  user_id INTEGER NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
+  session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
   token_hash TEXT NOT NULL,
   device_info TEXT,
   ip_address TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
-  CONSTRAINT unique_token_hash UNIQUE (token_hash)
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '7 days')
   )`;
+    await sql`
+  CREATE INDEX IF NOT EXISTS idx_refresh_user_id 
+  ON refresh_tokens(user_id)`;
+    await sql`
+  CREATE INDEX IF NOT EXISTS idx_refresh_expires 
+  ON refresh_tokens(expires_at);`;
+
     console.log("✅ database table checked and created");
   } catch (error) {
     console.log("❌ ERROR INITIALIZING DATABASE", error);
