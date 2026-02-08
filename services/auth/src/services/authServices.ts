@@ -52,7 +52,7 @@ export const loginUserService = async (
   sessionInfo: { deviceInfo: string; ipAddress: string | null },
 ) => {
   const [user] = await sql`
-    SELECT user_id,name,email,email_varified,password,role,phone_number,created_at FROM users WHERE email = ${email};
+    SELECT user_id,name,email,email_verified,password,role,phone_number,created_at FROM users WHERE email = ${email};
   `;
   if (!user) throw new AppError(401, "Invalid email or password");
   const passMatch = await bcrypt.compare(password, user.password);
@@ -69,7 +69,6 @@ export const loginUserService = async (
 
   const accessToken = generateAccessToken({
     userId: userDTO.userId,
-    email: userDTO.email,
     role: userDTO.role,
   });
 
@@ -99,7 +98,8 @@ export const createAccessTokenService = async (refreshToken: string) => {
 `;
   //session not in db
   if (!session) {
-    throw new AppError(401, "Session compromised.");
+    await sql`DELETE * FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+    throw new AppError(401, "Session reuse detected. Login again.");
   }
 
   const match = await bcrypt.compare(refreshToken, session.token_hash);
@@ -109,13 +109,13 @@ export const createAccessTokenService = async (refreshToken: string) => {
     throw new AppError(401, "Session reuse detected. Login again.");
   }
 
-  //FIND email role
+  //FIND  role
   const [user] =
-    await sql`SELECT email,role FROM users WHERE user_id=${decoded.userId} `;
+    await sql`SELECT role FROM users WHERE user_id=${decoded.userId} `;
   if (!user) throw new AppError(404, "User no longer exist");
+  //create tokens
   const accessToken = generateAccessToken({
     userId: session.user_id,
-    email: user.email,
     role: user.role,
   });
 
@@ -123,7 +123,7 @@ export const createAccessTokenService = async (refreshToken: string) => {
     userId: session.userId,
     sessionId: session.session_id,
   });
-
+  // hash token and update db
   const newRefreshToken = await bcrypt.hash(refreshToken, 10);
   await sql`
   UPDATE refresh_tokens
@@ -132,10 +132,11 @@ export const createAccessTokenService = async (refreshToken: string) => {
   expires_at = ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
   WHERE session_id = ${session.session_id};
 `;
+
   return { accessToken, newRefreshToken };
 };
 
-export const logoutService = async (refreshToken: string) => {
+export const singleLogoutService = async (refreshToken: string) => {
   const decode = verifyRefreshToken(refreshToken);
 
   const [session] = await sql`

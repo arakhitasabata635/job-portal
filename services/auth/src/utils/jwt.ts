@@ -10,7 +10,6 @@ export interface RefreshPayload {
 }
 interface AccessPayload {
   userId: number;
-  email: string;
   role: string;
 }
 
@@ -33,7 +32,7 @@ export const verifyAccessToken = (token: string): AccessPayload => {
   }
 };
 
-export const verifyRefreshToken = (token: string): RefreshPayload => {
+export const verifyRefreshToken = (token: string) => {
   try {
     return jwt.verify(token, refreshSecret) as RefreshPayload;
   } catch (error: any) {

@@ -1,7 +1,7 @@
 import {
   createAccessTokenService,
   loginUserService,
-  logoutService,
+  singleLogoutService,
   registerUserService,
 } from "../services/authServices.js";
 import { controller } from "../types/controller.js";
@@ -74,11 +74,11 @@ export const refreshAccessTokenController: controller = async (
   return sendSuccess<{}>(res, { accessToken }, "token created succefully", 200);
 };
 
-export const logoutControler: controller = async (req, res, next) => {
+export const singleLogoutControler: controller = async (req, res, next) => {
   const refreshToken: string | undefined = req.cookies["refreshToken"];
   if (!refreshToken) throw new AppError(204, "User is already logout");
 
-  const result = await logoutService(refreshToken);
+  const result = await singleLogoutService(refreshToken);
   if (!result)
     throw new AppError(
       500,

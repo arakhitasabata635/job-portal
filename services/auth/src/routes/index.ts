@@ -2,7 +2,7 @@ import express from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import {
   loginUserController,
-  logoutControler,
+  singleLogoutControler,
   refreshAccessTokenController,
   registerUserController,
 } from "../controller/auth.js";
@@ -16,7 +16,7 @@ router.post(
   asyncHandler(registerUserController),
 );
 router.post("/login", validate(loginSchema), asyncHandler(loginUserController));
-router.post("/logout", asyncHandler(logoutControler));
+router.post("/logout", asyncHandler(singleLogoutControler));
 router.post("/refresh", asyncHandler(refreshAccessTokenController));
 
 export default router;
