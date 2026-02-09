@@ -3,6 +3,7 @@ import {
   loginUserService,
   singleLogoutService,
   registerUserService,
+  allLogoutService,
 } from "../services/authServices.js";
 import { controller } from "../types/controller.js";
 import { sendSuccess } from "../utils/response.js";
@@ -65,7 +66,7 @@ export const refreshAccessTokenController: controller = async (
   if (!refreshToken)
     throw new AppError(400, "Refresh token is missing or null.");
 
-  res.clearCookie("refreshToken", clearCookieOption);
+  // res.clearCookie("refreshToken", clearCookieOption);
 
   const { accessToken, newRefreshToken } =
     await createAccessTokenService(refreshToken);
@@ -88,4 +89,26 @@ export const singleLogoutControler: controller = async (req, res, next) => {
   res.clearCookie("refreshToken", clearCookieOption);
 
   return sendSuccess<{}>(res, {}, "Logout succefully", 204);
+};
+
+export const allLogoutController: controller = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    throw new AppError(401, "Authorization header missing");
+  }
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    throw new AppError(401, "Access token missing");
+  }
+  const result = await allLogoutService(token);
+  if (!result)
+    throw new AppError(
+      500,
+      "Logout failed due to a server error. Please try again.",
+    );
+
+  res.clearCookie("refreshToken", clearCookieOption);
+
+  return sendSuccess<{}>(res, {}, "Logout from all device is succefull", 204);
 };

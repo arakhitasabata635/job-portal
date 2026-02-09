@@ -5,6 +5,7 @@ import {
   singleLogoutControler,
   refreshAccessTokenController,
   registerUserController,
+  allLogoutController,
 } from "../controller/auth.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
@@ -18,5 +19,6 @@ router.post(
 router.post("/login", validate(loginSchema), asyncHandler(loginUserController));
 router.post("/logout", asyncHandler(singleLogoutControler));
 router.post("/refresh", asyncHandler(refreshAccessTokenController));
+router.post("/logout-all", asyncHandler(allLogoutController));
 
 export default router;

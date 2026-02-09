@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import {
   generateAccessToken,
   generateRefreshToken,
+  verifyAccessToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
 import { randomUUID } from "node:crypto";
@@ -61,7 +62,7 @@ export const loginUserService = async (
     userId: user.user_id,
     name: user.name,
     email: user.email,
-    isEmailVerify: user.email_varified,
+    isEmailVerify: user.email_verified,
     phoneNumber: user.phone_number,
     role: user.role,
     createdAt: user.created_at,
@@ -91,21 +92,22 @@ export const loginUserService = async (
 export const createAccessTokenService = async (refreshToken: string) => {
   //valid token
   const decoded = verifyRefreshToken(refreshToken);
+  console.log(decoded);
   const [session] = await sql`
   SELECT *
   FROM refresh_tokens
-  WHERE user_id = ${decoded.sessionId};
+  WHERE session_id = ${decoded.sessionId};
 `;
-  //session not in db
+  // session not in db
   if (!session) {
-    await sql`DELETE * FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+    await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
     throw new AppError(401, "Session reuse detected. Login again.");
   }
 
   const match = await bcrypt.compare(refreshToken, session.token_hash);
   // bcrypt compare fail
   if (!match) {
-    await sql`DELETE * FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+    await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
     throw new AppError(401, "Session reuse detected. Login again.");
   }
 
@@ -119,20 +121,19 @@ export const createAccessTokenService = async (refreshToken: string) => {
     role: user.role,
   });
 
-  refreshToken = generateRefreshToken({
-    userId: session.userId,
+  const newRefreshToken = generateRefreshToken({
+    userId: session.user_id,
     sessionId: session.session_id,
   });
   // hash token and update db
-  const newRefreshToken = await bcrypt.hash(refreshToken, 10);
+  const hashRefresh = await bcrypt.hash(newRefreshToken, 10);
   await sql`
   UPDATE refresh_tokens
-  SET token_hash = ${newRefreshToken},
-  created_at= ${new Date(Date.now())}
-  expires_at = ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
+  SET token_hash = ${hashRefresh},
+  created_at= NOW(),
+  expires_at = NOW() + INTERVAL '7 days'
   WHERE session_id = ${session.session_id};
 `;
-
   return { accessToken, newRefreshToken };
 };
 
@@ -145,10 +146,18 @@ export const singleLogoutService = async (refreshToken: string) => {
   if (!session) {
     throw new AppError(204, "Already logout");
   }
-  const result = await bcrypt.compare(refreshToken, session.token_hash);
-  if (!result) {
-    throw new AppError(401, "Invalid or Wrong session ID.");
-  }
   return await sql`
   DELETE FROM refresh_tokens WHERE session_id = ${session.session_id}`;
+};
+
+export const allLogoutService = async (token: string) => {
+  const decoded = verifyAccessToken(token);
+
+  const sessions = await sql`
+ SELECT * FROM refresh_tokens WHERE user_id= ${decoded.userId}
+`;
+  if (sessions.length < 1) {
+    throw new AppError(204, "No session Exist");
+  }
+  return await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
 };
