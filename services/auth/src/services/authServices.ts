@@ -92,7 +92,6 @@ export const loginUserService = async (
 export const createAccessTokenService = async (refreshToken: string) => {
   //valid token
   const decoded = verifyRefreshToken(refreshToken);
-  console.log(decoded);
   const [session] = await sql`
   SELECT *
   FROM refresh_tokens

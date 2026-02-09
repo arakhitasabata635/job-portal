@@ -18,7 +18,7 @@ async function initDb() {
   name VARCHAR(255) NOT NULL,
   email  VARCHAR(255) NOT NULL,
   email_verified BOOLEAN DEFAULT FALSE,
-  password VARCHAR(255) NOT NULL,
+  password VARCHAR(255),
   phone_number VARCHAR(20),
   role user_role NOT NULL,
   bio TEXT,
@@ -60,6 +60,17 @@ async function initDb() {
     await sql`
   CREATE INDEX IF NOT EXISTS idx_refresh_expires 
   ON refresh_tokens(expires_at);`;
+
+    await sql`
+  CREATE TABLE IF NOT EXISTS oauth_accounts(
+  id UUID PRIMARY KEY  DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL,            
+  provider_user_id VARCHAR(255) NOT NULL, 
+  created_at TIMESTAMPTZ DEFAULT NOW(), 
+  CONSTRAINT uq_provider_user UNIQUE (provider, provider_user_id)
+  );
+  `;
 
     console.log("✅ database table checked and created");
   } catch (error) {
