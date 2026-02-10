@@ -5,6 +5,7 @@ import {
   registerUserService,
   allLogoutService,
   generateGoogleOauthURLService,
+  googleCallbackService,
 } from "../services/authServices.js";
 import { controller } from "../types/controller.js";
 import { sendSuccess } from "../utils/response.js";
@@ -118,13 +119,13 @@ export const generateGoogleOauthURL: controller = async (req, res, next) => {
   const { url, codeVerifier, state } = await generateGoogleOauthURLService();
   res.cookie("pkce_verifier", codeVerifier, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "lax",
     maxAge: 5 * 60 * 1000,
   });
   res.cookie("google_state", state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "lax",
     maxAge: 5 * 60 * 1000,
   });
@@ -133,5 +134,26 @@ export const generateGoogleOauthURL: controller = async (req, res, next) => {
     { url },
     "Authorization URL generated successfully",
     301,
+  );
+};
+
+export const googleCallbackController: controller = async (req, res, next) => {
+  const { state, code } = req.query;
+  const codeVerifier = req.cookies["pkce_verifier"] as string;
+  const google_state = req.cookies["google_state"] as string;
+  console.log("codeVerifier", codeVerifier);
+  console.log("google_state", google_state);
+  if (
+    !(state && code && codeVerifier && google_state && state === google_state)
+  )
+    throw new AppError(404, "invalid session please try again");
+
+  const deviceInfo = getDeviceInfo(req);
+  const ipAddress = getIp(req);
+
+  const { userDTO, accessToken, refreshToken } = await googleCallbackService(
+    codeVerifier,
+    code as string,
+    { deviceInfo, ipAddress },
   );
 };

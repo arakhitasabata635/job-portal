@@ -185,3 +185,15 @@ export const generateGoogleOauthURLService = async () => {
   });
   return { url, codeVerifier, state };
 };
+
+export const googleCallbackService = async (
+  codeVerifier: string,
+  code: string,
+  device: { deviceInfo: string; ipAddress: string | null },
+) => {
+  const token = await client.getToken({
+    code,
+    codeVerifier,
+  });
+  console.log("tokens", token);
+};

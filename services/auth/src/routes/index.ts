@@ -7,6 +7,7 @@ import {
   registerUserController,
   allLogoutController,
   generateGoogleOauthURL,
+  googleCallbackController,
 } from "../controller/auth.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
@@ -22,6 +23,7 @@ router.post("/logout", asyncHandler(singleLogoutControler));
 router.post("/refresh", asyncHandler(refreshAccessTokenController));
 router.post("/logout-all", asyncHandler(allLogoutController));
 
-router.post("/google", asyncHandler(generateGoogleOauthURL));
+router.get("/google", asyncHandler(generateGoogleOauthURL));
+router.get("/google-callback", asyncHandler(googleCallbackController));
 
 export default router;
