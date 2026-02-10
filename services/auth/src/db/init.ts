@@ -20,7 +20,7 @@ async function initDb() {
   email_verified BOOLEAN DEFAULT FALSE,
   password VARCHAR(255),
   phone_number VARCHAR(20),
-  role user_role NOT NULL,
+  role user_role NOT NULL DEFAULT 'jobseeker',
   bio TEXT,
   resume VARCHAR(255) ,
   resume_public_id VARCHAR(255),
@@ -65,6 +65,7 @@ async function initDb() {
   CREATE TABLE IF NOT EXISTS oauth_accounts(
   id UUID PRIMARY KEY  DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  role user_role NOT NULL
   provider VARCHAR(50) NOT NULL,            
   provider_user_id VARCHAR(255) NOT NULL, 
   created_at TIMESTAMPTZ DEFAULT NOW(), 

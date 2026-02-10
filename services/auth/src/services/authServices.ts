@@ -191,9 +191,79 @@ export const googleCallbackService = async (
   code: string,
   device: { deviceInfo: string; ipAddress: string | null },
 ) => {
-  const token = await client.getToken({
+  const { tokens } = await client.getToken({
     code,
     codeVerifier,
   });
-  console.log("tokens", token);
+
+  const ticket = client.verifyIdToken({
+    idToken: tokens.id_token!,
+    audience: process.env.GOOGLE_CLIENT_ID as string,
+  });
+
+  const payload = await (await ticket).getPayload();
+  if (!payload) throw new AppError(401, "Invalid Google token");
+  const { sub, email, email_verified, name } = payload;
+
+  const [existingOauth] = await sql`
+  SELECT * FROM oauth_accounts 
+  WHERE provider_user_id=${sub}
+  AND provider = 'google'
+  `;
+
+  let userId;
+  let role = "jobseeker";
+  if (existingOauth) {
+    userId = existingOauth.user_id;
+    role = existingOauth.role;
+  } else {
+    const [existingUser] = await sql`
+    SELECT user_id, role FROM users
+    WHERE email=${email}
+    `;
+
+    if (existingUser) {
+      userId = existingUser.user_id;
+      role = existingUser.role;
+    } else {
+      const [user] =
+        await sql`INSERT INTO users (name, email,email_verified) VALUES (${name}, ${email}, ${email_verified}) RETURNING 
+      user_id , role`;
+      if (!user) throw new AppError(500, "User not created please try again");
+      userId = user.user_id;
+      role = user.role;
+    }
+    await sql`
+      INSERT INTO oauth_accounts
+      (user_id, provider, provider_user_id)
+      VALUES (${userId}, 'google', ${sub});
+    `;
+  }
+  //create tokens 
+
+    const accessToken = generateAccessToken({
+    userId: userId,
+    role: role,
+  });
+
+  const sessionId = crypto.randomUUID(); // create rendom session id
+  const refreshToken = generateRefreshToken({
+    userId: userId,
+    sessionId,
+  });
+
+  const hashRefresh = await bcrypt.hash(refreshToken, 10);
+
+  await sql`
+  INSERT INTO refresh_tokens (session_id,user_id, token_hash, device_info, ip_address)
+  VALUES (${sessionId},${userId}, ${hashRefresh}, ${device.deviceInfo}, ${device.ipAddress})
+ ;
+`;
+const userDTO:UserDTO= {
+  userId,
+  name=name,
+  email,
+  isEmailVerify
+}
+  return { {}, accessToken, refreshToken };
 };
