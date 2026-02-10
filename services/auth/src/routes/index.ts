@@ -6,6 +6,7 @@ import {
   refreshAccessTokenController,
   registerUserController,
   allLogoutController,
+  generateGoogleOauthURL,
 } from "../controller/auth.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
@@ -20,5 +21,7 @@ router.post("/login", validate(loginSchema), asyncHandler(loginUserController));
 router.post("/logout", asyncHandler(singleLogoutControler));
 router.post("/refresh", asyncHandler(refreshAccessTokenController));
 router.post("/logout-all", asyncHandler(allLogoutController));
+
+router.post("/google", asyncHandler(generateGoogleOauthURL));
 
 export default router;

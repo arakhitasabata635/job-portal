@@ -9,7 +9,14 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
-import { randomUUID } from "node:crypto";
+import crypto from "crypto";
+import { CodeChallengeMethod, OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI,
+);
 
 export const registerUserService = async ({
   name,
@@ -73,7 +80,7 @@ export const loginUserService = async (
     role: userDTO.role,
   });
 
-  const sessionId = randomUUID(); // create rendom session id
+  const sessionId = crypto.randomUUID(); // create rendom session id
   const refreshToken = generateRefreshToken({
     userId: userDTO.userId,
     sessionId,
@@ -159,4 +166,22 @@ export const allLogoutService = async (token: string) => {
     throw new AppError(204, "No session Exist");
   }
   return await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+};
+
+export const generateGoogleOauthURLService = async () => {
+  const state = crypto.randomBytes(16).toString("hex");
+  const codeVerifier = crypto.randomBytes(32).toString("hex");
+
+  const codeChallenge = crypto
+    .createHash("sha256")
+    .update(codeVerifier)
+    .digest("base64url");
+
+  const url = client.generateAuthUrl({
+    scope: ["openid", "email", "profile"],
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: CodeChallengeMethod.S256,
+  });
+  return { url, codeVerifier, state };
 };

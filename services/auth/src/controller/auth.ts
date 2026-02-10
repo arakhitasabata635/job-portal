@@ -4,6 +4,7 @@ import {
   singleLogoutService,
   registerUserService,
   allLogoutService,
+  generateGoogleOauthURLService,
 } from "../services/authServices.js";
 import { controller } from "../types/controller.js";
 import { sendSuccess } from "../utils/response.js";
@@ -111,4 +112,26 @@ export const allLogoutController: controller = async (req, res, next) => {
   res.clearCookie("refreshToken", clearCookieOption);
 
   return sendSuccess<{}>(res, {}, "Logout from all device is succefull", 204);
+};
+
+export const generateGoogleOauthURL: controller = async (req, res, next) => {
+  const { url, codeVerifier, state } = await generateGoogleOauthURLService();
+  res.cookie("pkce_verifier", codeVerifier, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 5 * 60 * 1000,
+  });
+  res.cookie("google_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 5 * 60 * 1000,
+  });
+  return sendSuccess<{}>(
+    res,
+    { url },
+    "Authorization URL generated successfully",
+    301,
+  );
 };
