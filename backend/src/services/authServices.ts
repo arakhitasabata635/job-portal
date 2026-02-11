@@ -1,4 +1,4 @@
-import { sql } from "../db/index.js";
+import { sql } from "../config/index.js";
 import { LoginInput, RegisterInput } from "../schemas/auth.schema.js";
 import { UserDTO } from "../types/user.js";
 import { AppError } from "../utils/errorClass.js";
