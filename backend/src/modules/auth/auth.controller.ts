@@ -10,24 +10,13 @@ import {
 import { controller } from "../../types/controller.js";
 import { UserDTO } from "../../types/user.js";
 import { AppError } from "../../shared/errors/appError.js";
-import { CookieOptions } from "express";
 import { sendSuccess } from "../../shared/response/response.js";
 import { getDeviceInfo, getIp } from "../../shared/helpers/device.helper.js";
+import * as cookieOptions from "./auth.cookies.js";
 
 type LoginRes = {
   user: UserDTO;
   accessToken: string;
-};
-const cookieOption: CookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-};
-const clearCookieOption: CookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
 };
 export const registerUserController: controller = async (req, res, next) => {
   let createdUser = await registerUserService(req.body);
@@ -41,7 +30,7 @@ export const registerUserController: controller = async (req, res, next) => {
 
 export const loginUserController: controller = async (req, res, next) => {
   if (req.cookies["refreshToken"])
-    res.clearCookie("refreshToken", clearCookieOption);
+    res.clearCookie("refreshToken", cookieOptions.clearCookieOption);
   const deviceInfo = getDeviceInfo(req);
   const ipAddress = getIp(req);
   const { userDTO, accessToken, refreshToken } = await loginUserService(
@@ -49,7 +38,7 @@ export const loginUserController: controller = async (req, res, next) => {
     { deviceInfo, ipAddress },
   );
 
-  res.cookie("refreshToken", refreshToken, cookieOption);
+  res.cookie("refreshToken", refreshToken, cookieOptions.cookieOption);
   return sendSuccess<LoginRes>(
     res,
     { user: userDTO, accessToken },
@@ -73,7 +62,7 @@ export const refreshAccessTokenController: controller = async (
   const { accessToken, newRefreshToken } =
     await createAccessTokenService(refreshToken);
 
-  res.cookie("refreshToken", newRefreshToken, cookieOption);
+  res.cookie("refreshToken", newRefreshToken, cookieOptions.cookieOption);
   return sendSuccess<{}>(res, { accessToken }, "token created succefully", 200);
 };
 
@@ -88,7 +77,7 @@ export const singleLogoutControler: controller = async (req, res, next) => {
       "Logout failed due to a server error. Please try again or clear your browser cookies.",
     );
 
-  res.clearCookie("refreshToken", clearCookieOption);
+  res.clearCookie("refreshToken", cookieOptions.clearCookieOption);
 
   return sendSuccess<{}>(res, {}, "Logout succefully", 204);
 };
@@ -110,28 +99,16 @@ export const allLogoutController: controller = async (req, res, next) => {
       "Logout failed due to a server error. Please try again.",
     );
 
-  res.clearCookie("refreshToken", clearCookieOption);
+  res.clearCookie("refreshToken", cookieOptions.clearCookieOption);
 
   return sendSuccess<{}>(res, {}, "Logout from all device is succefull", 204);
 };
 
 export const generateGoogleOauthURL: controller = async (req, res, next) => {
   const { url, codeVerifier, state } = await generateGoogleOauthURLService();
-  res.cookie("pkce_verifier", codeVerifier, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax",
-    path: "/api/auth/google-callback",
-    maxAge: 5 * 60 * 1000,
-  });
+  res.cookie("pkce_verifier", codeVerifier, cookieOptions.oAuthCookieOption);
 
-  res.cookie("google_state", state, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax",
-    path: "/api/auth/google-callback",
-    maxAge: 5 * 60 * 1000,
-  });
+  res.cookie("google_state", state, cookieOptions.oAuthCookieOption);
   res.redirect(url);
 };
 
@@ -154,7 +131,7 @@ export const googleCallbackController: controller = async (req, res, next) => {
     code as string,
     { deviceInfo, ipAddress },
   );
-  res.cookie("refreshToken", refreshToken, cookieOption);
+  res.cookie("refreshToken", refreshToken, cookieOptions.cookieOption);
   return sendSuccess<LoginRes>(
     res,
     { user: userDTO, accessToken },
