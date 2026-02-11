@@ -28,12 +28,12 @@ export const registerUserService = async ({
     throw new AppError(409, 'User already Exist.');
   }
 
-  const hashPassword = await bcrypt.hash(password, 10);
+  const hashpassword = await bcrypt.hash(password, 10);
 
   const user = await authRepo.createUser({
     name,
     email,
-    hashPassword,
+    hashpassword,
     phoneNumber,
     role,
   });

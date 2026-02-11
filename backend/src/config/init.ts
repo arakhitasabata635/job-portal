@@ -1,4 +1,4 @@
-import { sql } from "./db.js";
+import { sql } from './db.js';
 
 async function initDb() {
   try {
@@ -18,7 +18,7 @@ async function initDb() {
   name VARCHAR(255) NOT NULL,
   email  VARCHAR(255) NOT NULL UNIQUE,
   email_verified BOOLEAN DEFAULT FALSE,
-  hashPassword VARCHAR(255),
+  hashpassword VARCHAR(255),
   phone_number VARCHAR(20),
   role user_role NOT NULL DEFAULT 'jobseeker',
   bio TEXT,
@@ -73,9 +73,9 @@ async function initDb() {
   );
   `;
 
-    console.log("✅ database table checked and created");
+    console.log('✅ database table checked and created');
   } catch (error) {
-    console.log("❌ ERROR INITIALIZING DATABASE", error);
+    console.log('❌ ERROR INITIALIZING DATABASE', error);
     process.exit(1);
   }
 }
