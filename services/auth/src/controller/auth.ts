@@ -119,26 +119,20 @@ export const generateGoogleOauthURL: controller = async (req, res, next) => {
   const { url, codeVerifier, state } = await generateGoogleOauthURLService();
   res.cookie("pkce_verifier", codeVerifier, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: false,
+    sameSite: "lax",
     path: "/api/auth/google-callback",
     maxAge: 5 * 60 * 1000,
   });
 
   res.cookie("google_state", state, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: false,
+    sameSite: "lax",
     path: "/api/auth/google-callback",
     maxAge: 5 * 60 * 1000,
   });
   res.redirect(url);
-  return sendSuccess<{}>(
-    res,
-    { url },
-    "Authorization URL generated successfully",
-    301,
-  );
 };
 
 export const googleCallbackController: controller = async (req, res, next) => {
@@ -159,5 +153,12 @@ export const googleCallbackController: controller = async (req, res, next) => {
     codeVerifier,
     code as string,
     { deviceInfo, ipAddress },
+  );
+  res.cookie("refreshToken", refreshToken, cookieOption);
+  return sendSuccess<LoginRes>(
+    res,
+    { user: userDTO, accessToken },
+    "user Login successfully",
+    200,
   );
 };

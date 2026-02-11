@@ -203,7 +203,12 @@ export const googleCallbackService = async (
 
   const payload = await (await ticket).getPayload();
   if (!payload) throw new AppError(401, "Invalid Google token");
-  const { sub, email, email_verified, name } = payload;
+  const { sub, email, email_verified, name } = payload as {
+    sub: string;
+    email: string;
+    email_verified: boolean;
+    name: string;
+  };
 
   const [existingOauth] = await sql`
   SELECT * FROM oauth_accounts 
@@ -212,7 +217,7 @@ export const googleCallbackService = async (
   `;
 
   let userId;
-  let role = "jobseeker";
+  let role;
   if (existingOauth) {
     userId = existingOauth.user_id;
     role = existingOauth.role;
@@ -235,13 +240,13 @@ export const googleCallbackService = async (
     }
     await sql`
       INSERT INTO oauth_accounts
-      (user_id, provider, provider_user_id)
-      VALUES (${userId}, 'google', ${sub});
+      (user_id, provider, provider_user_id, role)
+      VALUES (${userId}, 'google', ${sub}, ${role});
     `;
   }
-  //create tokens 
+  //create tokens
 
-    const accessToken = generateAccessToken({
+  const accessToken = generateAccessToken({
     userId: userId,
     role: role,
   });
@@ -259,11 +264,12 @@ export const googleCallbackService = async (
   VALUES (${sessionId},${userId}, ${hashRefresh}, ${device.deviceInfo}, ${device.ipAddress})
  ;
 `;
-const userDTO:UserDTO= {
-  userId,
-  name=name,
-  email,
-  isEmailVerify
-}
-  return { {}, accessToken, refreshToken };
+  const userDTO: UserDTO = {
+    userId,
+    name,
+    email,
+    role,
+    isEmailVerify: email_verified,
+  };
+  return { userDTO, accessToken, refreshToken };
 };
