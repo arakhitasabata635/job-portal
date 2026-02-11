@@ -1,6 +1,6 @@
-import app from "./app.js";
-import dotenv from "dotenv";
-import initDb from "./config/init.js";
+import app from './app.js';
+import dotenv from 'dotenv';
+import initDb from './config/init.js';
 
 dotenv.config();
 
@@ -9,9 +9,7 @@ async function startServer() {
     await initDb();
 
     app.listen(process.env.PORT, () => {
-      console.log(
-        `🚀 Auth service running on http://localhost:${process.env.PORT}`,
-      );
+      console.log(`🚀 Auth service running on http://localhost:${process.env.PORT}`);
     });
   } catch (error) {
     process.exit(1);

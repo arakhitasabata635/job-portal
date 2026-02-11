@@ -1,18 +1,13 @@
-import { sql } from "../../config/db.js";
-import { LoginInput, RegisterInput } from "./auth.schema.js";
-import { UserDTO } from "../../types/user.js";
-import { AppError } from "../../shared/errors/appError.js";
-import bcrypt from "bcrypt";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-} from "./auth.token.js";
-import crypto from "crypto";
-import { CodeChallengeMethod, OAuth2Client } from "google-auth-library";
-import * as authRepo from "./auth.repository.js";
-import { toUserDTO } from "./auth.mapper.js";
+import { sql } from '../../config/db.js';
+import { LoginInput, RegisterInput } from './auth.schema.js';
+import { UserDTO } from '../../types/user.js';
+import { AppError } from '../../shared/errors/appError.js';
+import bcrypt from 'bcrypt';
+import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from './auth.token.js';
+import crypto from 'crypto';
+import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
+import * as authRepo from './auth.repository.js';
+import { toUserDTO } from './auth.mapper.js';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -30,7 +25,7 @@ export const registerUserService = async ({
   const existingUser = await authRepo.findUserByEmail(email);
 
   if (existingUser) {
-    throw new AppError(409, "User already Exist.");
+    throw new AppError(409, 'User already Exist.');
   }
 
   const hashPassword = await bcrypt.hash(password, 10);
@@ -43,7 +38,7 @@ export const registerUserService = async ({
     role,
   });
   if (!user) {
-    throw new AppError(500, "An unexpected error occurred. Please try again.");
+    throw new AppError(500, 'An unexpected error occurred. Please try again.');
   }
 
   const userDTO = toUserDTO(user);
@@ -55,9 +50,9 @@ export const loginUserService = async (
   sessionInfo: { deviceInfo: string; ipAddress: string | null },
 ) => {
   const user = await authRepo.findUserByEmail(email);
-  if (!user) throw new AppError(401, "Invalid email or password");
+  if (!user) throw new AppError(401, 'Invalid email or password');
   const passMatch = await bcrypt.compare(password, user.password);
-  if (!passMatch) throw new AppError(401, "Invalid email or password");
+  if (!passMatch) throw new AppError(401, 'Invalid email or password');
 
   const userDTO = toUserDTO(user);
 
@@ -93,20 +88,19 @@ export const createAccessTokenService = async (refreshToken: string) => {
   // session not in db
   if (!session) {
     await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
-    throw new AppError(401, "Session reuse detected. Login again.");
+    throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
   const match = await bcrypt.compare(refreshToken, session.token_hash);
   // bcrypt compare fail
   if (!match) {
     await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
-    throw new AppError(401, "Session reuse detected. Login again.");
+    throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
   //FIND  role
-  const [user] =
-    await sql`SELECT role FROM users WHERE user_id=${decoded.userId} `;
-  if (!user) throw new AppError(404, "User no longer exist");
+  const [user] = await sql`SELECT role FROM users WHERE user_id=${decoded.userId} `;
+  if (!user) throw new AppError(404, 'User no longer exist');
   //create tokens
   const accessToken = generateAccessToken({
     userId: session.user_id,
@@ -136,7 +130,7 @@ export const singleLogoutService = async (refreshToken: string) => {
  SELECT * FROM refresh_tokens WHERE session_id= ${decode.sessionId}
 `;
   if (!session) {
-    throw new AppError(204, "Already logout");
+    throw new AppError(204, 'Already logout');
   }
   return await sql`
   DELETE FROM refresh_tokens WHERE session_id = ${session.session_id}`;
@@ -149,22 +143,19 @@ export const allLogoutService = async (token: string) => {
  SELECT * FROM refresh_tokens WHERE user_id= ${decoded.userId}
 `;
   if (sessions.length < 1) {
-    throw new AppError(204, "No session Exist");
+    throw new AppError(204, 'No session Exist');
   }
   return await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
 };
 
 export const generateGoogleOauthURLService = async () => {
-  const state = crypto.randomBytes(16).toString("hex");
-  const codeVerifier = crypto.randomBytes(32).toString("hex");
+  const state = crypto.randomBytes(16).toString('hex');
+  const codeVerifier = crypto.randomBytes(32).toString('hex');
 
-  const codeChallenge = crypto
-    .createHash("sha256")
-    .update(codeVerifier)
-    .digest("base64url");
+  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
 
   const url = client.generateAuthUrl({
-    scope: ["openid", "email", "profile"],
+    scope: ['openid', 'email', 'profile'],
     state,
     code_challenge: codeChallenge,
     code_challenge_method: CodeChallengeMethod.S256,
@@ -188,7 +179,7 @@ export const googleCallbackService = async (
   });
 
   const payload = ticket.getPayload();
-  if (!payload) throw new AppError(401, "Invalid Google token");
+  if (!payload) throw new AppError(401, 'Invalid Google token');
   const { sub, email, email_verified, name } = payload as {
     sub: string;
     email: string;
@@ -221,7 +212,7 @@ export const googleCallbackService = async (
         emailVerified: email_verified,
       });
 
-      if (!user) throw new AppError(500, "User not created please try again");
+      if (!user) throw new AppError(500, 'User not created please try again');
       userId = user.user_id;
       role = user.role;
     }

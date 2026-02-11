@@ -1,5 +1,5 @@
-import { RequestHandler } from "express";
-import { controller } from "../../types/controller.js";
+import { RequestHandler } from 'express';
+import { controller } from '../../types/controller.js';
 
 export const asyncHandler =
   (controller: controller): RequestHandler =>

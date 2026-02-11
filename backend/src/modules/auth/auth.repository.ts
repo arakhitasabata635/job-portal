@@ -1,4 +1,4 @@
-import { sql } from "../../config/db.js";
+import { sql } from '../../config/db.js';
 
 export const findUserByEmail = async (email: string) => {
   const [user] = await sql`
@@ -22,7 +22,7 @@ export const createUser = async (data: {
       ${data.email},
       ${data.hashPassword ?? null},
       ${data.phoneNumber ?? null},
-      ${data.role ?? "jobseeker"},
+      ${data.role ?? 'jobseeker'},
       ${data.emailVerified ?? false}
     )
     RETURNING *;

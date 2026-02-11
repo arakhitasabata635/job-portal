@@ -1,4 +1,4 @@
-export type UserRole = "jobseeker" | "recruiter";
+export type UserRole = 'jobseeker' | 'recruiter';
 
 export interface UserRow {
   user_id: number;

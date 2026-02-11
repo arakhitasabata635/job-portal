@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit from 'express-rate-limit';
 
 export const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -8,8 +8,8 @@ export const authLimiter = rateLimit({
   handler: (req, res, next, options) => {
     res.status(options.statusCode).json({
       success: false,
-      message: "Too many login attempts. Please try again after 1 houre.",
-      retryAfter: res.getHeader("Retry-After"), // Tells them how many seconds to wait
+      message: 'Too many login attempts. Please try again after 1 houre.',
+      retryAfter: res.getHeader('Retry-After'), // Tells them how many seconds to wait
     });
   },
 });

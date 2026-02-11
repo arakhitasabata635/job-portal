@@ -1,12 +1,7 @@
-import { Response } from "express";
-import { ApiResponse, ValidationError } from "../../types/apiResponse.js";
+import { Response } from 'express';
+import { ApiResponse, ValidationError } from '../../types/apiResponse.js';
 
-export const sendSuccess = <T>(
-  res: Response<ApiResponse<T>>,
-  data: T,
-  message: string,
-  statusCode = 200,
-) => {
+export const sendSuccess = <T>(res: Response<ApiResponse<T>>, data: T, message: string, statusCode = 200) => {
   return res.status(statusCode).json({
     success: true,
     message,

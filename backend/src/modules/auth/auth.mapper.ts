@@ -1,4 +1,4 @@
-import { UserDTO } from "../../types/user.js";
+import { UserDTO } from '../../types/user.js';
 
 export const toUserDTO = (user: any): UserDTO => {
   return {
