@@ -1,5 +1,5 @@
 import express from "express";
-import { asyncHandler } from "../middleware/asyncHandler.js";
+import { asyncHandler } from "../shared/middleware/asyncHandler.js";
 import {
   loginUserController,
   singleLogoutControler,
@@ -8,9 +8,9 @@ import {
   allLogoutController,
   generateGoogleOauthURL,
   googleCallbackController,
-} from "../controller/auth.js";
-import { validate } from "../middleware/validate.middleware.js";
-import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
+} from "../modules/auth/auth.controller.js";
+import { validate } from "../shared/middleware/validate.middleware.js";
+import { loginSchema, registerSchema } from "../modules/auth/auth.schema.js";
 
 const router = express.Router();
 router.post(

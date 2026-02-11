@@ -1,10 +1,10 @@
 import express from "express";
-import { globalErrorHandler } from "./middleware/globalError.middleware.js";
+import { globalErrorHandler } from "./shared/middleware/error.middleware.js";
 import router from "./routes/index.js";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import cors from "cors";
-import { authLimiter } from "./utils/authLimiter.js";
+import { authLimiter } from "./shared/middleware/rateLimit.middleware.js";
 
 const app = express();
 app.set("trust proxy", 1);

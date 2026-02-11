@@ -1,7 +1,7 @@
 import { z, ZodError } from "zod";
 import { asyncHandler } from "./asyncHandler.js";
-import { AppError } from "../utils/errorClass.js";
-import { sendError } from "../utils/response.js";
+import { AppError } from "../errors/appError.js";
+import { sendError } from "../response/response.js";
 
 export const validate = (schema: z.ZodTypeAny) =>
   asyncHandler(async (req, res, next) => {
