@@ -12,6 +12,7 @@ import {
 import crypto from "crypto";
 import { CodeChallengeMethod, OAuth2Client } from "google-auth-library";
 import * as authRepo from "./auth.repository.js";
+import { toUserDTO } from "./auth.mapper.js";
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -45,15 +46,7 @@ export const registerUserService = async ({
     throw new AppError(500, "An unexpected error occurred. Please try again.");
   }
 
-  const userDTO: UserDTO = {
-    userId: user.user_id,
-    name: user.name,
-    email: user.email,
-    isEmailVerify: user.email_verified,
-    phoneNumber: user.phone_number,
-    role: user.role,
-    createdAt: user.created_at,
-  };
+  const userDTO = toUserDTO(user);
   return userDTO;
 };
 
@@ -61,21 +54,12 @@ export const loginUserService = async (
   { email, password }: LoginInput,
   sessionInfo: { deviceInfo: string; ipAddress: string | null },
 ) => {
-  const [user] = await sql`
-    SELECT user_id,name,email,email_verified,password,role,phone_number,created_at FROM users WHERE email = ${email};
-  `;
+  const user = await authRepo.findUserByEmail(email);
   if (!user) throw new AppError(401, "Invalid email or password");
   const passMatch = await bcrypt.compare(password, user.password);
   if (!passMatch) throw new AppError(401, "Invalid email or password");
-  const userDTO: UserDTO = {
-    userId: user.user_id,
-    name: user.name,
-    email: user.email,
-    isEmailVerify: user.email_verified,
-    phoneNumber: user.phone_number,
-    role: user.role,
-    createdAt: user.created_at,
-  };
+
+  const userDTO = toUserDTO(user);
 
   const accessToken = generateAccessToken({
     userId: userDTO.userId,
@@ -220,22 +204,23 @@ export const googleCallbackService = async (
 
   let userId;
   let role;
+  let user;
   if (existingOauth) {
     userId = existingOauth.user_id;
     role = existingOauth.role;
   } else {
-    const [existingUser] = await sql`
-    SELECT user_id, role FROM users
-    WHERE email=${email}
-    `;
+    const existingUser = await authRepo.findUserByEmail(email);
 
     if (existingUser) {
       userId = existingUser.user_id;
       role = existingUser.role;
     } else {
-      const [user] =
-        await sql`INSERT INTO users (name, email,email_verified) VALUES (${name}, ${email}, ${email_verified}) RETURNING 
-      user_id , role`;
+      const user = await authRepo.createUser({
+        name,
+        email,
+        emailVerified: email_verified,
+      });
+
       if (!user) throw new AppError(500, "User not created please try again");
       userId = user.user_id;
       role = user.role;
@@ -266,12 +251,6 @@ export const googleCallbackService = async (
   VALUES (${sessionId},${userId}, ${hashRefresh}, ${device.deviceInfo}, ${device.ipAddress})
  ;
 `;
-  const userDTO: UserDTO = {
-    userId,
-    name,
-    email,
-    role,
-    isEmailVerify: email_verified,
-  };
+  const userDTO = toUserDTO(user);
   return { userDTO, accessToken, refreshToken };
 };
