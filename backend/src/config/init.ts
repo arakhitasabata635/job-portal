@@ -16,9 +16,9 @@ async function initDb() {
   CREATE TABLE IF NOT EXISTS users (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
-  email  VARCHAR(255) NOT NULL,
+  email  VARCHAR(255) NOT NULL UNIQUE,
   email_verified BOOLEAN DEFAULT FALSE,
-  password VARCHAR(255),
+  hashPassword VARCHAR(255),
   phone_number VARCHAR(20),
   role user_role NOT NULL DEFAULT 'jobseeker',
   bio TEXT,

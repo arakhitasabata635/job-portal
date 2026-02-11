@@ -11,6 +11,7 @@ import {
 } from "./auth.token.js";
 import crypto from "crypto";
 import { CodeChallengeMethod, OAuth2Client } from "google-auth-library";
+import * as authRepo from "./auth.repository.js";
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -25,24 +26,25 @@ export const registerUserService = async ({
   phoneNumber,
   role,
 }: RegisterInput): Promise<UserDTO> => {
-  const existingUser =
-    await sql`SELECT user_id FROM users WHERE email=${email}`;
+  const existingUser = await authRepo.findUserByEmail(email);
 
-  if (existingUser.length) {
+  if (existingUser) {
     throw new AppError(409, "User already Exist.");
   }
 
   const hashPassword = await bcrypt.hash(password, 10);
 
-  const [user] =
-    await sql`INSERT INTO users (name, email, password, phone_number, role) VALUES (${name}, ${email}, ${hashPassword},${phoneNumber}, ${role}) RETURNING 
-      user_id ,name,email,email_verified,phone_number,role,created_at`;
+  const user = await authRepo.createUser({
+    name,
+    email,
+    hashPassword,
+    phoneNumber,
+    role,
+  });
   if (!user) {
-    throw new AppError(
-      500,
-      "An unexpected error occurred. Please try again later",
-    );
+    throw new AppError(500, "An unexpected error occurred. Please try again.");
   }
+
   const userDTO: UserDTO = {
     userId: user.user_id,
     name: user.name,
@@ -196,12 +198,12 @@ export const googleCallbackService = async (
     codeVerifier,
   });
 
-  const ticket = client.verifyIdToken({
+  const ticket = await client.verifyIdToken({
     idToken: tokens.id_token!,
     audience: process.env.GOOGLE_CLIENT_ID as string,
   });
 
-  const payload = await (await ticket).getPayload();
+  const payload = ticket.getPayload();
   if (!payload) throw new AppError(401, "Invalid Google token");
   const { sub, email, email_verified, name } = payload as {
     sub: string;

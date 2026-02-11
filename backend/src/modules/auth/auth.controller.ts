@@ -13,6 +13,7 @@ import { AppError } from "../../shared/errors/appError.js";
 import { sendSuccess } from "../../shared/response/response.js";
 import { getDeviceInfo, getIp } from "../../shared/helpers/device.helper.js";
 import * as cookieOptions from "./auth.cookies.js";
+import { extractRefreshToken } from "../../shared/helpers/auth.token.helper.js";
 
 type LoginRes = {
   user: UserDTO;
@@ -52,10 +53,7 @@ export const refreshAccessTokenController: controller = async (
   res,
   next,
 ) => {
-  const refreshToken: string | undefined = req.cookies["refreshToken"];
-
-  if (!refreshToken)
-    throw new AppError(400, "Refresh token is missing or null.");
+  const refreshToken = extractRefreshToken(req);
 
   // res.clearCookie("refreshToken", clearCookieOption);
 
