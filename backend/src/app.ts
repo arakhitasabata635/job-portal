@@ -22,7 +22,7 @@ app.use((req, res, next) => {
   next();
 });
 // limit the attempts
-// app.use("/api/auth", authLimiter);
+app.use('/api/auth', authLimiter);
 app.use('/api/auth', router);
 
 app.use((req, res) => {
