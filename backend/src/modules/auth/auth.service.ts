@@ -85,21 +85,18 @@ export const loginUserService = async (input: LoginInput, sessionInfo: SessionIn
 export const createAccessTokenService = async (refreshToken: string): Promise<RefreshTokenResponse> => {
   //valid token
   const decoded = verifyRefreshToken(refreshToken);
-  const [session] = await sql`
-  SELECT *
-  FROM refresh_tokens
-  WHERE session_id = ${decoded.sessionId};
-`;
+  const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
+
   // session not in db
   if (!session) {
-    await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+    await sessionRepo.deleteAllSessionsByUser(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
   const match = await bcrypt.compare(refreshToken, session.token_hash);
   // bcrypt compare fail
   if (!match) {
-    await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+    await sessionRepo.deleteAllSessionsByUser(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
@@ -118,39 +115,27 @@ export const createAccessTokenService = async (refreshToken: string): Promise<Re
   });
   // hash token and update db
   const hashRefresh = await bcrypt.hash(newRefreshToken, 10);
-  await sql`
-  UPDATE refresh_tokens
-  SET token_hash = ${hashRefresh},
-  created_at= NOW(),
-  expires_at = NOW() + INTERVAL '7 days'
-  WHERE session_id = ${session.session_id};
-`;
+  await sessionRepo.updateSessionToken(session.session_id, hashRefresh);
+
   return { accessToken, newRefreshToken };
 };
 
 export const singleLogoutService = async (refreshToken: string) => {
-  const decode = verifyRefreshToken(refreshToken);
+  const decoded = verifyRefreshToken(refreshToken);
 
-  const [session] = await sql`
- SELECT * FROM refresh_tokens WHERE session_id= ${decode.sessionId}
-`;
+  const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
+
   if (!session) {
     throw new AppError(204, 'Already logout');
   }
-  return await sql`
-  DELETE FROM refresh_tokens WHERE session_id = ${session.session_id}`;
+  return await sessionRepo.deleteSessionById(decoded.sessionId);
 };
+
+// all session delete using accessToken
 
 export const allLogoutService = async (token: string) => {
   const decoded = verifyAccessToken(token);
-
-  const sessions = await sql`
- SELECT * FROM refresh_tokens WHERE user_id= ${decoded.userId}
-`;
-  if (sessions.length < 1) {
-    throw new AppError(204, 'No session Exist');
-  }
-  return await sql`DELETE FROM refresh_tokens WHERE user_id = ${decoded.userId}`;
+  return await sessionRepo.deleteAllSessionsByUser(decoded.userId);
 };
 
 export const generateGoogleOauthURLService = async () => {
@@ -168,11 +153,7 @@ export const generateGoogleOauthURLService = async () => {
   return { url, codeVerifier, state };
 };
 
-export const googleCallbackService = async (
-  codeVerifier: string,
-  code: string,
-  device: { deviceInfo: string; ipAddress: string | null },
-) => {
+export const googleCallbackService = async (codeVerifier: string, code: string, sessionInfo: SessionInfo) => {
   const { tokens } = await client.getToken({
     code,
     codeVerifier,
@@ -240,13 +221,16 @@ export const googleCallbackService = async (
     sessionId,
   });
 
-  const hashRefresh = await bcrypt.hash(refreshToken, 10);
+  const tokenHash = await bcrypt.hash(refreshToken, 10);
 
-  await sql`
-  INSERT INTO refresh_tokens (session_id,user_id, token_hash, device_info, ip_address)
-  VALUES (${sessionId},${userId}, ${hashRefresh}, ${device.deviceInfo}, ${device.ipAddress})
- ;
-`;
+  await sessionRepo.createSession({
+    sessionId,
+    userId,
+    tokenHash,
+    deviceInfo: sessionInfo.deviceInfo,
+    ipAddress: sessionInfo.ipAddress,
+  });
+
   const userDTO = toUserDTO(user);
   return { userDTO, accessToken, refreshToken };
 };
