@@ -12,8 +12,8 @@ import { AppError } from '../../shared/errors/appError.js';
 import { sendSuccess } from '../../shared/response/response.js';
 import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
 import * as cookieOptions from './auth.cookies.js';
-import { extractRefreshToken } from '../../shared/helpers/auth.token.helper.js';
-import { LoginResponse, UserDTO } from './auth.types.js';
+import { extractAccesToken, extractTokenFromCookie } from '../../shared/helpers/auth.token.helper.js';
+import { UserDTO } from './auth.types.js';
 
 export const registerUserController: controller = async (req, res, next) => {
   let createdUser = await registerUserService(req.body);
@@ -27,13 +27,11 @@ export const loginUserController: controller = async (req, res, next) => {
   const { userDTO, accessToken, refreshToken } = await loginUserService(req.body, { deviceInfo, ipAddress });
 
   res.cookie('refreshToken', refreshToken, cookieOptions.cookieOption);
-  return sendSuccess<LoginResponse>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);
+  return sendSuccess<{}>(res, { userDTO, accessToken }, 'user Login successfully', 200);
 };
 
 export const refreshAccessTokenController: controller = async (req, res, next) => {
-  const refreshToken = extractRefreshToken(req);
-
-  // res.clearCookie("refreshToken", clearCookieOption);
+  const refreshToken = extractTokenFromCookie(req, 'refreshToken');
 
   const { accessToken, newRefreshToken } = await createAccessTokenService(refreshToken);
 
@@ -42,30 +40,17 @@ export const refreshAccessTokenController: controller = async (req, res, next) =
 };
 
 export const singleLogoutControler: controller = async (req, res, next) => {
-  const refreshToken: string | undefined = req.cookies['refreshToken'];
-  if (!refreshToken) throw new AppError(204, 'User is already logout');
+  const refreshToken = extractTokenFromCookie(req, 'refreshToken');
 
   const result = await singleLogoutService(refreshToken);
-  if (!result)
-    throw new AppError(500, 'Logout failed due to a server error. Please try again or clear your browser cookies.');
-
   res.clearCookie('refreshToken', cookieOptions.clearCookieOption);
 
-  return sendSuccess<{}>(res, {}, 'Logout succefully', 204);
+  return sendSuccess<{}>(res, {}, 'Logout succefully', 200);
 };
 
 export const allLogoutController: controller = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    throw new AppError(401, 'Authorization header missing');
-  }
-  const token = authHeader.split(' ')[1];
-
-  if (!token) {
-    throw new AppError(401, 'Access token missing');
-  }
+  const token = extractAccesToken(req);
   const result = await allLogoutService(token);
-  if (!result) throw new AppError(500, 'Logout failed due to a server error. Please try again.');
 
   res.clearCookie('refreshToken', cookieOptions.clearCookieOption);
 
@@ -74,20 +59,19 @@ export const allLogoutController: controller = async (req, res, next) => {
 
 export const generateGoogleOauthURL: controller = async (req, res, next) => {
   const { url, codeVerifier, state } = await generateGoogleOauthURLService();
-  res.cookie('pkce_verifier', codeVerifier, cookieOptions.oAuthCookieOption);
 
+  res.cookie('pkce_verifier', codeVerifier, cookieOptions.oAuthCookieOption);
   res.cookie('google_state', state, cookieOptions.oAuthCookieOption);
+
   res.redirect(url);
 };
 
 export const googleCallbackController: controller = async (req, res, next) => {
   const { state, code } = req.query;
-  const codeVerifier = req.cookies['pkce_verifier'] as string;
-  const google_state = req.cookies['google_state'] as string;
-  console.log('codeVerifier', codeVerifier);
-  console.log('google_state', google_state);
-  if (!(state && code && codeVerifier && google_state && state === google_state))
-    throw new AppError(404, 'invalid session please try again');
+  const codeVerifier = extractTokenFromCookie(req, 'pkce_verifier');
+  const google_state = extractTokenFromCookie(req, 'google_state');
+
+  if (!(state && code && state === google_state)) throw new AppError(404, 'invalid session please try again');
 
   const deviceInfo = getDeviceInfo(req);
   const ipAddress = getIp(req);
@@ -97,5 +81,5 @@ export const googleCallbackController: controller = async (req, res, next) => {
     ipAddress,
   });
   res.cookie('refreshToken', refreshToken, cookieOptions.cookieOption);
-  return sendSuccess<LoginRes>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);
+  return sendSuccess<{}>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);
 };
