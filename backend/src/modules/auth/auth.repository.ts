@@ -1,43 +1,56 @@
 import { sql } from '../../config/db.js';
-import { UserDTO } from '../../types/user.js';
+import { UserRole } from '../../types/role.js';
+import { UserEntity } from './auth.types.js';
 
-export const findUserByEmail = async (email: string) => {
+// find user using email
+
+export const findUserByEmail = async (email: string): Promise<UserEntity | null> => {
   const [user] = await sql`
-  SELECT * FROM users WHERE email = ${email}
+    SELECT * FROM users WHERE email = ${email}
   `;
-  return user || null;
+
+  if (!user) return null;
+  const findUser = user as UserEntity;
+  return findUser;
 };
 
-export const createUser = async (data: {
+//find user using userId
+
+export const findUserByid = async (userId: string): Promise<UserEntity | null> => {
+  const [user] = await sql`
+SELECT * FROM users WHERE user_id = ${userId}
+`;
+
+  if (!user) return null;
+  const findUser = user as UserEntity;
+  return findUser;
+};
+
+// create user
+interface CreateUserInput {
   name: string;
   email: string;
-  hashpassword?: string;
-  phoneNumber?: string;
-  role?: string;
+  password?: string | null;
+  phoneNumber?: string | null;
+  role?: UserRole;
   emailVerified?: boolean;
-}) => {
+}
+
+export const createUser = async (data: CreateUserInput): Promise<UserEntity | null> => {
   const [user] = await sql`
-    INSERT INTO users (name, email, hashpassword, phone_number, role, email_verified)
+    INSERT INTO users (name, email, password, phone_number, role, email_verified)
     VALUES (
       ${data.name},
       ${data.email},
-      ${data.hashpassword ?? null},
+      ${data.password ?? null},
       ${data.phoneNumber ?? null},
       ${data.role ?? 'jobseeker'},
       ${data.emailVerified ?? false}
     )
     RETURNING *;
   `;
-  if (!user) return null;
 
-  const userDTO: UserDTO = {
-    userId: user.user_id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    emailVerify: user.email_verified,
-    phoneNumber: user.phone_number,
-    createdAt: user.created_at,
-  };
-  return userDTO;
+  if (!user) return null;
+  const findUser = user as UserEntity;
+  return findUser;
 };
