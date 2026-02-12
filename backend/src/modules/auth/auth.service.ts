@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import * as authRepo from './auth.repository.js';
 import { toUserDTO } from './auth.mapper.js';
-import { SessionInfo, UserDTO } from './auth.types.js';
+import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO } from './auth.types.js';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -45,7 +45,7 @@ export const registerUserService = async (input: RegisterInput): Promise<UserDTO
 /* ======================================
    LOGIN
 ====================================== */
-export const loginUserService = async (input: LoginInput, sessionInfo: SessionInfo) => {
+export const loginUserService = async (input: LoginInput, sessionInfo: SessionInfo): Promise<LoginResponse> => {
   const user = await authRepo.findUserByEmail(input.email);
 
   if (!user) throw new AppError(401, 'Invalid email or password');
@@ -80,7 +80,7 @@ export const loginUserService = async (input: LoginInput, sessionInfo: SessionIn
 /* ======================================
    REFRESH TOKEN
 ====================================== */
-export const createAccessTokenService = async (refreshToken: string) => {
+export const createAccessTokenService = async (refreshToken: string): Promise<RefreshTokenResponse> => {
   //valid token
   const decoded = verifyRefreshToken(refreshToken);
   const [session] = await sql`
@@ -102,16 +102,16 @@ export const createAccessTokenService = async (refreshToken: string) => {
   }
 
   //FIND  role
-  const [user] = await sql`SELECT role FROM users WHERE user_id=${decoded.userId} `;
+  const user = await authRepo.findUserByid(decoded.userId);
   if (!user) throw new AppError(404, 'User no longer exist');
   //create tokens
   const accessToken = generateAccessToken({
-    userId: session.user_id,
+    userId: user.user_id,
     role: user.role,
   });
 
   const newRefreshToken = generateRefreshToken({
-    userId: session.user_id,
+    userId: user.user_id,
     sessionId: session.session_id,
   });
   // hash token and update db
