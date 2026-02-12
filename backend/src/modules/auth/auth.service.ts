@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import * as authRepo from './auth.repository.js';
 import { toUserDTO } from './auth.mapper.js';
-import { UserDTO } from './auth.types.js';
+import { SessionInfo, UserDTO } from './auth.types.js';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -15,6 +15,9 @@ const client = new OAuth2Client(
   process.env.GOOGLE_REDIRECT_URI,
 );
 
+/* ======================================
+   REGISTER
+====================================== */
 export const registerUserService = async (input: RegisterInput): Promise<UserDTO> => {
   const existingUser = await authRepo.findUserByEmail(input.email);
 
@@ -39,16 +42,16 @@ export const registerUserService = async (input: RegisterInput): Promise<UserDTO
   return userDTO;
 };
 
-export const loginUserService = async (
-  { email, password }: LoginInput,
-  sessionInfo: { deviceInfo: string; ipAddress: string | null },
-) => {
-  const user = await authRepo.findUserByEmail(email);
+/* ======================================
+   LOGIN
+====================================== */
+export const loginUserService = async (input: LoginInput, sessionInfo: SessionInfo) => {
+  const user = await authRepo.findUserByEmail(input.email);
 
   if (!user) throw new AppError(401, 'Invalid email or password');
   if (!user.password) throw new AppError(401, 'Invalid email or password');
 
-  const passMatch = await bcrypt.compare(password, user.password);
+  const passMatch = await bcrypt.compare(input.password, user.password);
   if (!passMatch) throw new AppError(401, 'Invalid email or password');
 
   const userDTO = toUserDTO(user);
@@ -74,6 +77,9 @@ export const loginUserService = async (
   return { userDTO, accessToken, refreshToken };
 };
 
+/* ======================================
+   REFRESH TOKEN
+====================================== */
 export const createAccessTokenService = async (refreshToken: string) => {
   //valid token
   const decoded = verifyRefreshToken(refreshToken);
