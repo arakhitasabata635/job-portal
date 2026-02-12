@@ -9,6 +9,7 @@ import * as authRepo from './auth.repository.js';
 import { toUserDTO } from './auth.mapper.js';
 import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO } from './auth.types.js';
 import * as sessionRepo from './session.repository.js';
+import * as oauthRepo from './oauth.repository.js';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -173,11 +174,7 @@ export const googleCallbackService = async (codeVerifier: string, code: string, 
     name: string;
   };
 
-  const [existingOauth] = await sql`
-  SELECT * FROM oauth_accounts 
-  WHERE provider_user_id=${sub}
-  AND provider = 'google'
-  `;
+  const existingOauth = await oauthRepo.findOauthAccount('google', sub);
 
   let userId;
   let role;
@@ -192,21 +189,13 @@ export const googleCallbackService = async (codeVerifier: string, code: string, 
       userId = existingUser.user_id;
       role = existingUser.role;
     } else {
-      const user = await authRepo.createUser({
-        name,
-        email,
-        emailVerified: email_verified,
-      });
-
+      const user = await authRepo.createUser({ name, email, emailVerified: email_verified });
       if (!user) throw new AppError(500, 'User not created please try again');
-      userId = user.userId;
+      userId = user.user_id;
       role = user.role;
     }
-    await sql`
-      INSERT INTO oauth_accounts
-      (user_id, provider, provider_user_id, role)
-      VALUES (${userId}, 'google', ${sub}, ${role});
-    `;
+
+    await oauthRepo.createOauthAccount(userId, 'google', sub, role);
   }
   //create tokens
 
