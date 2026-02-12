@@ -35,6 +35,7 @@ if (!parsedEnv.success) {
 const data = parsedEnv.data;
 export const config = {
   node_env: data.NODE_ENV,
+  db_url: data.DB_URL,
   jwt: {
     access_token: {
       secret: data.ACCESS_TOKEN_SECRET,

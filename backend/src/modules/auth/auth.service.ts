@@ -1,4 +1,4 @@
-import { sql } from '../../config/db.js';
+import { config } from '../../config/env.js';
 import { LoginInput, RegisterInput } from './auth.schema.js';
 import { AppError } from '../../shared/errors/appError.js';
 import bcrypt from 'bcrypt';
@@ -12,9 +12,9 @@ import * as sessionRepo from './session.repository.js';
 import * as oauthRepo from './oauth.repository.js';
 
 const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
+  config.oauth.google.client_id,
+  config.oauth.google.client_secret,
+  config.oauth.google.redirect_url,
 );
 
 /* ======================================
@@ -162,7 +162,7 @@ export const googleCallbackService = async (codeVerifier: string, code: string, 
 
   const ticket = await client.verifyIdToken({
     idToken: tokens.id_token!,
-    audience: process.env.GOOGLE_CLIENT_ID as string,
+    audience: config.oauth.google.client_id,
   });
 
   const payload = ticket.getPayload();

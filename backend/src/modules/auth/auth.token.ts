@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken';
 import { AppError } from '../../shared/errors/appError.js';
+import { config } from '../../config/env.js';
 
-const accessSecreate: string = process.env.JWT_ACCESS_SECRET as string;
-const refreshSecret = process.env.JWT_REFRESH_SECRET as string;
+const accessSecreate = config.jwt.access_token.secret;
+const refreshSecret = config.jwt.refresh_token.secret;
 
 interface RefreshPayload {
   userId: string;
