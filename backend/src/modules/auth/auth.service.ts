@@ -8,6 +8,7 @@ import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import * as authRepo from './auth.repository.js';
 import { toUserDTO } from './auth.mapper.js';
 import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO } from './auth.types.js';
+import * as sessionRepo from './session.repository.js';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -68,12 +69,13 @@ export const loginUserService = async (input: LoginInput, sessionInfo: SessionIn
   });
 
   const hashRefresh = await bcrypt.hash(refreshToken, 10);
-
-  await sql`
-  INSERT INTO refresh_tokens (session_id,user_id, token_hash, device_info, ip_address)
-  VALUES (${sessionId},${userDTO.userId}, ${hashRefresh}, ${sessionInfo.deviceInfo}, ${sessionInfo.ipAddress})
- ;
-`;
+  await sessionRepo.createSession({
+    sessionId,
+    userId: userDTO.userId,
+    tokenHash: hashRefresh,
+    deviceInfo: sessionInfo.deviceInfo,
+    ipAddress: sessionInfo.ipAddress,
+  });
   return { userDTO, accessToken, refreshToken };
 };
 

@@ -12,6 +12,9 @@ async function initDb() {
     END;
     $$;
   `;
+
+    //users table
+
     await sql`
   CREATE TABLE IF NOT EXISTS users (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -31,19 +34,7 @@ async function initDb() {
   )
   `;
 
-    await sql`
-  CREATE TABLE IF NOT EXISTS skills (
-  skill_id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL UNIQUE 
-  )
-  `;
-    await sql`
-  CREATE TABLE IF NOT EXISTS user_skills(
-  user_id UUID NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
-  skill_id INTEGER NOT NULL REFERENCES skills(skill_id)ON DELETE CASCADE,
-  PRIMARY KEY (user_id, skill_id)
-  )
-  `;
+    //refresh_tokens table
     await sql`
   CREATE TABLE IF NOT EXISTS refresh_tokens(
   session_id UUID PRIMARY KEY ,
@@ -60,6 +51,25 @@ async function initDb() {
     await sql`
   CREATE INDEX IF NOT EXISTS idx_refresh_expires 
   ON refresh_tokens(expires_at);`;
+
+    //skills
+    await sql`
+  CREATE TABLE IF NOT EXISTS skills (
+  skill_id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE 
+  )
+  `;
+
+    //user_skills table
+    await sql`
+  CREATE TABLE IF NOT EXISTS user_skills(
+  user_id UUID NOT NULL REFERENCES users(user_id)ON DELETE CASCADE,
+  skill_id INTEGER NOT NULL REFERENCES skills(skill_id)ON DELETE CASCADE,
+  PRIMARY KEY (user_id, skill_id)
+  )
+  `;
+
+    // oauth_accounts table
 
     await sql`
   CREATE TABLE IF NOT EXISTS oauth_accounts(
