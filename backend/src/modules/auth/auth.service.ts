@@ -1,6 +1,5 @@
 import { sql } from '../../config/db.js';
 import { LoginInput, RegisterInput } from './auth.schema.js';
-import { UserDTO } from '../../types/user.js';
 import { AppError } from '../../shared/errors/appError.js';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from './auth.token.js';
@@ -8,6 +7,7 @@ import crypto from 'crypto';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import * as authRepo from './auth.repository.js';
 import { toUserDTO } from './auth.mapper.js';
+import { UserDTO } from './auth.types.js';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -15,27 +15,21 @@ const client = new OAuth2Client(
   process.env.GOOGLE_REDIRECT_URI,
 );
 
-export const registerUserService = async ({
-  name,
-  email,
-  password,
-  phoneNumber,
-  role,
-}: RegisterInput): Promise<UserDTO> => {
-  const existingUser = await authRepo.findUserByEmail(email);
+export const registerUserService = async (input: RegisterInput): Promise<UserDTO> => {
+  const existingUser = await authRepo.findUserByEmail(input.email);
 
   if (existingUser) {
     throw new AppError(409, 'User already Exist.');
   }
 
-  const hashpassword = await bcrypt.hash(password, 10);
+  const hashpassword = await bcrypt.hash(input.password, 10);
 
   const user = await authRepo.createUser({
-    name,
-    email,
-    hashpassword,
-    phoneNumber,
-    role,
+    name: input.name,
+    email: input.email,
+    password: hashpassword,
+    phoneNumber: input.phoneNumber,
+    role: input.role,
   });
   if (!user) {
     throw new AppError(500, 'An unexpected error occurred. Please try again.');
@@ -50,7 +44,10 @@ export const loginUserService = async (
   sessionInfo: { deviceInfo: string; ipAddress: string | null },
 ) => {
   const user = await authRepo.findUserByEmail(email);
+
   if (!user) throw new AppError(401, 'Invalid email or password');
+  if (!user.password) throw new AppError(401, 'Invalid email or password');
+
   const passMatch = await bcrypt.compare(password, user.password);
   if (!passMatch) throw new AppError(401, 'Invalid email or password');
 

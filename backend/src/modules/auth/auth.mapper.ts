@@ -1,4 +1,4 @@
-import { UserDTO } from '../../types/user.js';
+import { UserDTO } from './auth.types.js';
 
 export const toUserDTO = (user: any): UserDTO => {
   return {
@@ -6,7 +6,8 @@ export const toUserDTO = (user: any): UserDTO => {
     name: user.name,
     email: user.email,
     role: user.role,
-    emailVerify: user.email_verified,
+    phoneNumber: user.phone_number,
+    isEmailVerify: user.email_verified,
     createdAt: user.created_at,
   };
 };

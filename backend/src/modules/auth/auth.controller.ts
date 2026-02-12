@@ -8,17 +8,13 @@ import {
   googleCallbackService,
 } from './auth.service.js';
 import { controller } from '../../types/controller.js';
-import { UserDTO } from '../../types/user.js';
 import { AppError } from '../../shared/errors/appError.js';
 import { sendSuccess } from '../../shared/response/response.js';
 import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
 import * as cookieOptions from './auth.cookies.js';
 import { extractRefreshToken } from '../../shared/helpers/auth.token.helper.js';
+import { LoginResponse, UserDTO } from './auth.types.js';
 
-type LoginRes = {
-  user: UserDTO;
-  accessToken: string;
-};
 export const registerUserController: controller = async (req, res, next) => {
   let createdUser = await registerUserService(req.body);
   return sendSuccess<UserDTO>(res, createdUser, 'user created successfully', 200);
@@ -31,7 +27,7 @@ export const loginUserController: controller = async (req, res, next) => {
   const { userDTO, accessToken, refreshToken } = await loginUserService(req.body, { deviceInfo, ipAddress });
 
   res.cookie('refreshToken', refreshToken, cookieOptions.cookieOption);
-  return sendSuccess<LoginRes>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);
+  return sendSuccess<LoginResponse>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);
 };
 
 export const refreshAccessTokenController: controller = async (req, res, next) => {
