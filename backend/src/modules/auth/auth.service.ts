@@ -213,7 +213,7 @@ export const googleCallbackService = async (
       });
 
       if (!user) throw new AppError(500, 'User not created please try again');
-      userId = user.user_id;
+      userId = user.userId;
       role = user.role;
     }
     await sql`
