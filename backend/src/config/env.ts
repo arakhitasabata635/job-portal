@@ -34,6 +34,7 @@ if (!parsedEnv.success) {
 }
 const data = parsedEnv.data;
 export const config = {
+  port: data.PORT,
   node_env: data.NODE_ENV,
   db_url: data.DB_URL,
   jwt: {

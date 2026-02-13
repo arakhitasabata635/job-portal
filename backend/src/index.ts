@@ -6,8 +6,8 @@ async function startServer() {
   try {
     await initDb();
 
-    app.listen(config.node_env, () => {
-      console.log(`🚀 Auth service running on http://localhost:${config.node_env}`);
+    app.listen(config.port, () => {
+      console.log(`🚀 Auth service running on http://localhost:${config.port}`);
     });
   } catch (error) {
     process.exit(1);

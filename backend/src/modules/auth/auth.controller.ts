@@ -14,6 +14,7 @@ import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
 import * as cookieOptions from './auth.cookies.js';
 import { extractAccesToken, extractTokenFromCookie } from '../../shared/helpers/auth.token.helper.js';
 import { UserDTO } from './auth.types.js';
+import { config } from '../../config/env.js';
 
 export const registerUserController: controller = async (req, res, next) => {
   let createdUser = await registerUserService(req.body);
@@ -21,29 +22,30 @@ export const registerUserController: controller = async (req, res, next) => {
 };
 
 export const loginUserController: controller = async (req, res, next) => {
-  if (req.cookies['refreshToken']) res.clearCookie('refreshToken', cookieOptions.clearCookieOption);
+  if (req.cookies[config.jwt.refresh_token.cookie_name])
+    res.clearCookie(config.jwt.refresh_token.cookie_name, cookieOptions.clearCookieOption);
   const deviceInfo = getDeviceInfo(req);
   const ipAddress = getIp(req);
   const { userDTO, accessToken, refreshToken } = await loginUserService(req.body, { deviceInfo, ipAddress });
 
-  res.cookie('refreshToken', refreshToken, cookieOptions.cookieOption);
+  res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookieOptions.cookieOption);
   return sendSuccess<{}>(res, { userDTO, accessToken }, 'user Login successfully', 200);
 };
 
 export const refreshAccessTokenController: controller = async (req, res, next) => {
-  const refreshToken = extractTokenFromCookie(req, 'refreshToken');
+  const refreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
 
   const { accessToken, newRefreshToken } = await createAccessTokenService(refreshToken);
 
-  res.cookie('refreshToken', newRefreshToken, cookieOptions.cookieOption);
+  res.cookie(config.jwt.refresh_token.cookie_name, newRefreshToken, cookieOptions.cookieOption);
   return sendSuccess<{}>(res, { accessToken }, 'token created succefully', 200);
 };
 
 export const singleLogoutControler: controller = async (req, res, next) => {
-  const refreshToken = extractTokenFromCookie(req, 'refreshToken');
+  const refreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
 
   const result = await singleLogoutService(refreshToken);
-  res.clearCookie('refreshToken', cookieOptions.clearCookieOption);
+  res.clearCookie(config.jwt.refresh_token.cookie_name, cookieOptions.clearCookieOption);
 
   return sendSuccess<{}>(res, {}, 'Logout succefully', 200);
 };
@@ -52,7 +54,7 @@ export const allLogoutController: controller = async (req, res, next) => {
   const token = extractAccesToken(req);
   const result = await allLogoutService(token);
 
-  res.clearCookie('refreshToken', cookieOptions.clearCookieOption);
+  res.clearCookie(config.jwt.refresh_token.cookie_name, cookieOptions.clearCookieOption);
 
   return sendSuccess<{}>(res, {}, 'Logout from all device is succefull', 204);
 };
@@ -80,6 +82,6 @@ export const googleCallbackController: controller = async (req, res, next) => {
     deviceInfo,
     ipAddress,
   });
-  res.cookie('refreshToken', refreshToken, cookieOptions.cookieOption);
+  res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookieOptions.cookieOption);
   return sendSuccess<{}>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);
 };
