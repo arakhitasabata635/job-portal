@@ -35,10 +35,12 @@ export const googleCallbackController: Controller = async (req, res, next) => {
   const deviceInfo = getDeviceInfo(req);
   const ipAddress = getIp(req);
 
-  const { userDTO, accessToken, refreshToken } = await googleCallbackService(codeVerifier, code as string, {
+  const { userDTO, accessToken, refreshToken } = await googleCallbackService(
+    codeVerifier,
+    code as string,
     deviceInfo,
     ipAddress,
-  });
+  );
 
   res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookieOptions.cookieOption);
   return sendSuccess<{}>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);

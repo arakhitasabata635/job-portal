@@ -1,14 +1,14 @@
 import { CodeChallengeMethod, OAuth2Client, TokenPayload } from 'google-auth-library';
 import { config } from '../../config/env.js';
 import { AppError } from '../../shared/errors/appError.js';
-import bcrypt from 'bcrypt';
+
 import crypto from 'crypto';
 import { SessionInfo, UserEntity } from '../auth/auth.types.js';
 import { createOauthAccount, findOauthAccount } from './oauth.repository.js';
 import { createUser, findUserByEmail, findUserByid } from '../auth/auth.repository.js';
-import { generateSessionTokens } from '../../shared/helpers/auth.token.helper.js';
-import { createSession } from '../session/session.repository.js';
+
 import { toUserDTO } from '../auth/auth.mapper.js';
+import * as sessionService from '../session/session.service.js';
 
 const client = new OAuth2Client(
   config.oauth.google.client_id,
@@ -31,25 +31,19 @@ export const generateUrlForGoogleOauth = async () => {
   return { url, codeVerifier, state };
 };
 
-export const googleCallbackService = async (codeVerifier: string, code: string, sessionInfo: SessionInfo) => {
+export const googleCallbackService = async (
+  codeVerifier: string,
+  code: string,
+  deviceInfo: string,
+  ipAddress: string | null,
+) => {
   const payload = await verifyGoogleToken(codeVerifier, code);
 
   const userDetails = await findOrCreateUserFromGoogle(payload);
-  //create tokens
-  const sessionId = crypto.randomUUID(); // create rendom session id
-  const { accessToken, refreshToken } = generateSessionTokens(userDetails.user_id, userDetails.role, sessionId);
-
-  const tokenHash = await bcrypt.hash(refreshToken, 10);
-
-  await createSession({
-    sessionId,
-    userId: userDetails.user_id,
-    tokenHash,
-    deviceInfo: sessionInfo.deviceInfo,
-    ipAddress: sessionInfo.ipAddress,
-  });
 
   const userDTO = toUserDTO(userDetails);
+  //create tokens
+  const { accessToken, refreshToken } = await sessionService.createSessionForUser(userDTO, deviceInfo, ipAddress);
   return { userDTO, accessToken, refreshToken };
 };
 const verifyGoogleToken = async (codeVerifier: string, code: string) => {
