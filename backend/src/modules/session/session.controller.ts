@@ -27,7 +27,7 @@ export const singleLogoutControler: Controller = async (req, res, next) => {
 
 export const allLogoutController: Controller = async (req, res, next) => {
   const token = extractAccesToken(req);
-  const result = await allLogoutService(token);
+  await allLogoutService(token);
 
   res.clearCookie(config.jwt.refresh_token.cookie_name, authCookieOptions.clearCookieOption);
 

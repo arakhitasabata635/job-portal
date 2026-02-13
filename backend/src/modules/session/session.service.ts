@@ -6,6 +6,21 @@ import { RefreshTokenResponse } from './session.type.js';
 
 import * as authRepo from '../auth/auth.repository.js';
 import * as sessionRepo from './session.repository.js';
+import { UserDTO } from '../auth/auth.types.js';
+
+export const createSessionForUser = async (
+  userDTO: UserDTO,
+  deviceInfo: string,
+  ipAddress: string,
+): Promise<RefreshTokenResponse> => {
+  const sessionId = crypto.randomUUID(); // create rendom session id
+  const { accessToken, refreshToken } = generateSessionTokens(userDTO.userId, userDTO.role, sessionId);
+  // hash token and update db
+  const tokenHash = await bcrypt.hash(refreshToken, 10);
+  await sessionRepo.createSession({ sessionId, userId: userDTO.userId, tokenHash, deviceInfo, ipAddress });
+
+  return { accessToken, refreshToken };
+};
 
 export const refreshSessionService = async (refreshToken: string): Promise<RefreshTokenResponse> => {
   //valid token
@@ -35,7 +50,7 @@ export const refreshSessionService = async (refreshToken: string): Promise<Refre
   const hashRefresh = await bcrypt.hash(newRefreshToken, 10);
   await sessionRepo.updateSessionToken(session.session_id, hashRefresh);
 
-  return { accessToken, newRefreshToken };
+  return { accessToken, refreshToken: newRefreshToken };
 };
 
 export const singleLogoutService = async (refreshToken: string) => {
