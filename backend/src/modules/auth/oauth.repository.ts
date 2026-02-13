@@ -9,15 +9,10 @@ export const findOauthAccount = async (provider: String, providerUserId: string)
   return account ?? null;
 };
 
-export const createOauthAccount = async (
-  userId: string,
-  provider: string,
-  providerUserId: string,
-  role: string,
-): Promise<void> => {
+export const createOauthAccount = async (userId: string, provider: string, providerUserId: string): Promise<void> => {
   await sql`
     INSERT INTO oauth_accounts
-    (user_id, provider, provider_user_id, role)
-    VALUES (${userId}, ${provider}, ${providerUserId}, ${role});
+    (user_id, provider, provider_user_id)
+    VALUES (${userId}, ${provider}, ${providerUserId});
   `;
 };

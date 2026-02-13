@@ -1,5 +1,20 @@
 import { Request } from 'express';
 import { AppError } from '../errors/appError.js';
+import { UserRole } from '../../types/role.js';
+import { generateAccessToken, generateRefreshToken } from '../../modules/auth/auth.token.js';
+
+export const generateSessionTokens = (userId: string, role: UserRole, sessionId: string) => {
+  const accessToken = generateAccessToken({
+    userId: userId,
+    role: role,
+  });
+
+  const refreshToken = generateRefreshToken({
+    userId: userId,
+    sessionId,
+  });
+  return { accessToken, refreshToken };
+};
 
 export const extractTokenFromCookie = (req: Request, tokenName: string): string => {
   const token = req.cookies?.[tokenName];

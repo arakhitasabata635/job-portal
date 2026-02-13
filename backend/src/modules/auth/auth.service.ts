@@ -2,7 +2,7 @@ import { config } from '../../config/env.js';
 import { LoginInput, RegisterInput } from './auth.schema.js';
 import { AppError } from '../../shared/errors/appError.js';
 import bcrypt from 'bcrypt';
-import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from './auth.token.js';
+import { verifyAccessToken, verifyRefreshToken } from './auth.token.js';
 import crypto from 'crypto';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import * as authRepo from './auth.repository.js';
@@ -10,6 +10,7 @@ import { toUserDTO } from './auth.mapper.js';
 import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO } from './auth.types.js';
 import * as sessionRepo from './session.repository.js';
 import * as oauthRepo from './oauth.repository.js';
+import { generateSessionTokens } from '../../shared/helpers/auth.token.helper.js';
 
 const client = new OAuth2Client(
   config.oauth.google.client_id,
@@ -57,19 +58,10 @@ export const loginUserService = async (input: LoginInput, sessionInfo: SessionIn
   if (!passMatch) throw new AppError(401, 'Invalid email or password');
 
   const userDTO = toUserDTO(user);
-
-  const accessToken = generateAccessToken({
-    userId: userDTO.userId,
-    role: userDTO.role,
-  });
-
   const sessionId = crypto.randomUUID(); // create rendom session id
-  const refreshToken = generateRefreshToken({
-    userId: userDTO.userId,
-    sessionId,
-  });
-
+  const { accessToken, refreshToken } = generateSessionTokens(userDTO.userId, userDTO.role, sessionId);
   const hashRefresh = await bcrypt.hash(refreshToken, 10);
+
   await sessionRepo.createSession({
     sessionId,
     userId: userDTO.userId,
@@ -105,15 +97,8 @@ export const createAccessTokenService = async (refreshToken: string): Promise<Re
   const user = await authRepo.findUserByid(decoded.userId);
   if (!user) throw new AppError(404, 'User no longer exist');
   //create tokens
-  const accessToken = generateAccessToken({
-    userId: user.user_id,
-    role: user.role,
-  });
-
-  const newRefreshToken = generateRefreshToken({
-    userId: user.user_id,
-    sessionId: session.session_id,
-  });
+  const sessionId = crypto.randomUUID(); // create rendom session id
+  const { accessToken, refreshToken: newRefreshToken } = generateSessionTokens(user.user_id, user.role, sessionId);
   // hash token and update db
   const hashRefresh = await bcrypt.hash(newRefreshToken, 10);
   await sessionRepo.updateSessionToken(session.session_id, hashRefresh);
@@ -160,13 +145,16 @@ export const googleCallbackService = async (codeVerifier: string, code: string, 
     codeVerifier,
   });
 
+  if (!tokens?.id_token) throw new AppError(401, 'Invalid Google token');
+
   const ticket = await client.verifyIdToken({
-    idToken: tokens.id_token!,
+    idToken: tokens.id_token,
     audience: config.oauth.google.client_id,
   });
 
   const payload = ticket.getPayload();
   if (!payload) throw new AppError(401, 'Invalid Google token');
+
   const { sub, email, email_verified, name } = payload as {
     sub: string;
     email: string;
@@ -176,50 +164,40 @@ export const googleCallbackService = async (codeVerifier: string, code: string, 
 
   const existingOauth = await oauthRepo.findOauthAccount('google', sub);
 
-  let userId;
-  let role;
-  let user;
+  let userDetails;
+
   if (existingOauth) {
-    userId = existingOauth.user_id;
-    role = existingOauth.role;
+    const user = await authRepo.findUserByid(existingOauth.user_id);
+    userDetails = user;
   } else {
     const existingUser = await authRepo.findUserByEmail(email);
 
     if (existingUser) {
-      userId = existingUser.user_id;
-      role = existingUser.role;
+      userDetails = existingUser;
     } else {
       const user = await authRepo.createUser({ name, email, emailVerified: email_verified });
       if (!user) throw new AppError(500, 'User not created please try again');
-      userId = user.user_id;
-      role = user.role;
+      await oauthRepo.createOauthAccount(user.user_id, 'google', sub);
+      userDetails = user;
     }
-
-    await oauthRepo.createOauthAccount(userId, 'google', sub, role);
   }
+
+  if (!userDetails) throw new AppError(500, 'User not created please try again');
+
   //create tokens
-
-  const accessToken = generateAccessToken({
-    userId: userId,
-    role: role,
-  });
-
   const sessionId = crypto.randomUUID(); // create rendom session id
-  const refreshToken = generateRefreshToken({
-    userId: userId,
-    sessionId,
-  });
+  const { accessToken, refreshToken } = generateSessionTokens(userDetails.user_id, userDetails.role, sessionId);
 
   const tokenHash = await bcrypt.hash(refreshToken, 10);
 
   await sessionRepo.createSession({
     sessionId,
-    userId,
+    userId: userDetails.user_id,
     tokenHash,
     deviceInfo: sessionInfo.deviceInfo,
     ipAddress: sessionInfo.ipAddress,
   });
 
-  const userDTO = toUserDTO(user);
+  const userDTO = toUserDTO(userDetails);
   return { userDTO, accessToken, refreshToken };
 };
