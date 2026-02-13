@@ -1,15 +1,21 @@
 import { config } from '../../config/env.js';
-import { LoginInput, RegisterInput } from './auth.schema.js';
 import { AppError } from '../../shared/errors/appError.js';
 import bcrypt from 'bcrypt';
-import { verifyAccessToken, verifyRefreshToken } from './auth.token.js';
 import crypto from 'crypto';
-import { TokenPayload } from 'google-auth-library';
-import * as authRepo from './auth.repository.js';
+
+//types
 import { toUserDTO } from './auth.mapper.js';
+import { TokenPayload } from 'google-auth-library';
+import { LoginInput, RegisterInput } from './auth.schema.js';
 import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO, UserEntity } from './auth.types.js';
-import * as sessionRepo from './session.repository.js';
-import * as oauthRepo from '../oauth/oauth.repository.js';
+
+//repository
+import * as authRepo from './repository/auth.repository.js';
+import * as sessionRepo from './repository/session.repository.js';
+import * as oauthRepo from './repository/oauth.repository.js';
+
+//tokens
+import { verifyAccessToken, verifyRefreshToken } from './auth.token.js';
 import { generateSessionTokens } from '../../shared/helpers/auth.token.helper.js';
 import { verifyGoogleToken } from '../oauth/google.service.js';
 
