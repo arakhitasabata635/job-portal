@@ -5,9 +5,9 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { SessionInfo, UserEntity } from '../auth/auth.types.js';
 import { createOauthAccount, findOauthAccount } from './oauth.repository.js';
-import { createUser, findUserByEmail, findUserByid } from '../auth/repository/auth.repository.js';
+import { createUser, findUserByEmail, findUserByid } from '../auth/auth.repository.js';
 import { generateSessionTokens } from '../../shared/helpers/auth.token.helper.js';
-import { createSession } from '../auth/repository/session.repository.js';
+import { createSession } from '../session/session.repository.js';
 import { toUserDTO } from '../auth/auth.mapper.js';
 
 const client = new OAuth2Client(
@@ -15,25 +15,6 @@ const client = new OAuth2Client(
   config.oauth.google.client_secret,
   config.oauth.google.redirect_url,
 );
-
-export const verifyGoogleToken = async (codeVerifier: string, code: string) => {
-  const { tokens } = await client.getToken({
-    code,
-    codeVerifier,
-  });
-
-  if (!tokens?.id_token) throw new AppError(401, 'Invalid Google token');
-
-  const ticket = await client.verifyIdToken({
-    idToken: tokens.id_token,
-    audience: config.oauth.google.client_id,
-  });
-
-  const payload = ticket.getPayload();
-
-  if (!payload) throw new AppError(401, 'Invalid Google token');
-  return payload;
-};
 
 export const generateUrlForGoogleOauth = async () => {
   const state = crypto.randomBytes(16).toString('hex');
@@ -71,7 +52,24 @@ export const googleCallbackService = async (codeVerifier: string, code: string, 
   const userDTO = toUserDTO(userDetails);
   return { userDTO, accessToken, refreshToken };
 };
+const verifyGoogleToken = async (codeVerifier: string, code: string) => {
+  const { tokens } = await client.getToken({
+    code,
+    codeVerifier,
+  });
 
+  if (!tokens?.id_token) throw new AppError(401, 'Invalid Google token');
+
+  const ticket = await client.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: config.oauth.google.client_id,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) throw new AppError(401, 'Invalid Google token');
+  return payload;
+};
 const findOrCreateUserFromGoogle = async (payload: TokenPayload): Promise<UserEntity> => {
   // check token got payload
   const { sub, email, email_verified, name } = payload;

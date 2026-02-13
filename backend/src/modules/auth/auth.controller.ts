@@ -40,31 +40,3 @@ export const loginUserController: Controller = async (req, res, next) => {
 
   return sendSuccess<{}>(res, { userDTO, accessToken }, 'user Login successfully', 200);
 };
-
-export const refreshAccessTokenController: Controller = async (req, res, next) => {
-  const refreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
-
-  const { accessToken, newRefreshToken } = await createAccessTokenService(refreshToken);
-
-  res.cookie(config.jwt.refresh_token.cookie_name, newRefreshToken, cookieOptions.cookieOption);
-
-  return sendSuccess<{}>(res, { accessToken }, 'token created succefully', 200);
-};
-
-export const singleLogoutControler: Controller = async (req, res, next) => {
-  const refreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
-
-  const result = await singleLogoutService(refreshToken);
-  res.clearCookie(config.jwt.refresh_token.cookie_name, cookieOptions.clearCookieOption);
-
-  return sendSuccess<{}>(res, {}, 'Logout succefully', 200);
-};
-
-export const allLogoutController: Controller = async (req, res, next) => {
-  const token = extractAccesToken(req);
-  const result = await allLogoutService(token);
-
-  res.clearCookie(config.jwt.refresh_token.cookie_name, cookieOptions.clearCookieOption);
-
-  return sendSuccess<{}>(res, {}, 'Logout from all device is succefull', 204);
-};

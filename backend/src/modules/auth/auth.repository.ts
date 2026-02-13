@@ -1,8 +1,8 @@
 // find user using email
 
-import { sql } from '../../../config/db.js';
-import { UserRole } from '../../../types/role.js';
-import { UserEntity } from '../auth.types.js';
+import { sql } from '../../config/db.js';
+import { UserRole } from '../../types/role.js';
+import { UserEntity } from './auth.types.js';
 
 export const findUserByEmail = async (email: string): Promise<UserEntity | null> => {
   const [user] = await sql`

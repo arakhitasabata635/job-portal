@@ -9,11 +9,10 @@ import { LoginInput, RegisterInput } from './auth.schema.js';
 import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO, UserEntity } from './auth.types.js';
 
 //repository
-import * as authRepo from './repository/auth.repository.js';
-import * as sessionRepo from './repository/session.repository.js';
+import * as authRepo from './auth.repository.js';
 
 //tokens
-import { verifyAccessToken, verifyRefreshToken } from './auth.token.js';
+import { verifyAccessToken, verifyRefreshToken } from '../session/auth.token.js';
 import { generateSessionTokens } from '../../shared/helpers/auth.token.helper.js';
 
 /* ======================================

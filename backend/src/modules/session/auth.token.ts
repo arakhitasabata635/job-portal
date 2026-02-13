@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { AppError } from '../../shared/errors/appError.js';
 import { config } from '../../config/env.js';
+import { UserRole } from '../../types/role.js';
 
 const accessSecreate = config.jwt.access_token.secret;
 const refreshSecret = config.jwt.refresh_token.secret;
@@ -14,12 +15,25 @@ interface AccessPayload {
   role: string;
 }
 
-export const generateAccessToken = (data: AccessPayload) => {
+const generateAccessToken = (data: AccessPayload) => {
   return jwt.sign(data, accessSecreate, { expiresIn: '1h' });
 };
 
-export const generateRefreshToken = (data: RefreshPayload) => {
+const generateRefreshToken = (data: RefreshPayload) => {
   return jwt.sign(data, refreshSecret, { expiresIn: '7h' });
+};
+
+export const generateSessionTokens = (userId: string, role: UserRole, sessionId: string) => {
+  const accessToken = generateAccessToken({
+    userId: userId,
+    role: role,
+  });
+
+  const refreshToken = generateRefreshToken({
+    userId: userId,
+    sessionId,
+  });
+  return { accessToken, refreshToken };
 };
 
 export const verifyAccessToken = (token: string): AccessPayload => {
