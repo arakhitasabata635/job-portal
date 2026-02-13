@@ -9,7 +9,7 @@ import * as authRepo from './auth.repository.js';
 import { toUserDTO } from './auth.mapper.js';
 import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO, UserEntity } from './auth.types.js';
 import * as sessionRepo from './session.repository.js';
-import * as oauthRepo from './oauth.repository.js';
+import * as oauthRepo from '../oauth/oauth.repository.js';
 import { generateSessionTokens } from '../../shared/helpers/auth.token.helper.js';
 import { verifyGoogleToken } from '../oauth/google.service.js';
 

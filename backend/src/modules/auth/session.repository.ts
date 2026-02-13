@@ -1,4 +1,5 @@
 import { sql } from '../../config/db.js';
+import { SessionEntity } from './auth.types.js';
 
 interface CreateSessionInput {
   sessionId: string;
@@ -17,20 +18,22 @@ export const createSession = async ({ sessionId, userId, tokenHash, deviceInfo, 
   `;
 };
 
-export const findSessionBySessionId = async (sessionId: string) => {
+export const findSessionBySessionId = async (sessionId: string): Promise<SessionEntity | null> => {
   const [session] = await sql`
   SELECT * FROM refresh_tokens
   WHERE session_id = ${sessionId}
   `;
-  return session ?? null;
+  if (!session) return null;
+  return session as SessionEntity;
 };
 
-export const findSessionByUserId = async (sessionId: string) => {
+export const findSessionByUserId = async (sessionId: string): Promise<SessionEntity | null> => {
   const [session] = await sql`
   DELETE refresh_tokens
   WHERE session_id = ${sessionId}
   `;
-  return session ?? null;
+  if (!session) return null;
+  return session as SessionEntity;
 };
 
 export const updateSessionToken = async (sessionId: string, newTokenHash: string) => {

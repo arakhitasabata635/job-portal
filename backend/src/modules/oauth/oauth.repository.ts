@@ -1,12 +1,15 @@
 import { sql } from '../../config/db.js';
+import { OauthEntity } from './oauth.type.js';
 
-export const findOauthAccount = async (provider: String, providerUserId: string) => {
+export const findOauthAccount = async (provider: String, providerUserId: string): Promise<OauthEntity | null> => {
   const [account] = await sql`
   SELECT * FROM oauth_accounts
   WHERE provider= ${provider} AND
   provider_user_id=${providerUserId}
   `;
-  return account ?? null;
+  if (!account) return null;
+
+  return account as OauthEntity;
 };
 
 export const createOauthAccount = async (userId: string, provider: string, providerUserId: string): Promise<void> => {
