@@ -4,7 +4,6 @@ import {
   singleLogoutService,
   registerUserService,
   allLogoutService,
-  generateGoogleOauthURLService,
   googleCallbackService,
 } from './auth.service.js';
 import { controller } from '../../types/controller.js';
@@ -15,6 +14,7 @@ import * as cookieOptions from './auth.cookies.js';
 import { extractAccesToken, extractTokenFromCookie } from '../../shared/helpers/auth.token.helper.js';
 import { UserDTO } from './auth.types.js';
 import { config } from '../../config/env.js';
+import { generateUrlForGoogleOauth } from '../oauth/google.service.js';
 
 export const registerUserController: controller = async (req, res, next) => {
   let createdUser = await registerUserService(req.body);
@@ -60,7 +60,7 @@ export const allLogoutController: controller = async (req, res, next) => {
 };
 
 export const generateGoogleOauthURL: controller = async (req, res, next) => {
-  const { url, codeVerifier, state } = await generateGoogleOauthURLService();
+  const { url, codeVerifier, state } = await generateUrlForGoogleOauth();
 
   res.cookie('pkce_verifier', codeVerifier, cookieOptions.oAuthCookieOption);
   res.cookie('google_state', state, cookieOptions.oAuthCookieOption);
