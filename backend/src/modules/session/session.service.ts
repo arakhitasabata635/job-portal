@@ -11,7 +11,7 @@ import { UserDTO } from '../auth/auth.types.js';
 export const createSessionForUser = async (
   userDTO: UserDTO,
   deviceInfo: string,
-  ipAddress: string,
+  ipAddress: string | null,
 ): Promise<RefreshTokenResponse> => {
   const sessionId = crypto.randomUUID(); // create rendom session id
   const { accessToken, refreshToken } = generateSessionTokens(userDTO.userId, userDTO.role, sessionId);

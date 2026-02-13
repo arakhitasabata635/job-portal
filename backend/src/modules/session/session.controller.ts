@@ -9,7 +9,7 @@ import * as authCookieOptions from '../auth/auth.cookies.js';
 export const rrefreshSessionController: Controller = async (req, res, next) => {
   const refreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
 
-  const { accessToken, newRefreshToken } = await refreshSessionService(refreshToken);
+  const { accessToken, refreshToken: newRefreshToken } = await refreshSessionService(refreshToken);
 
   res.cookie(config.jwt.refresh_token.cookie_name, newRefreshToken, authCookieOptions.cookieOption);
 
