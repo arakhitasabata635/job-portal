@@ -5,19 +5,16 @@ import crypto from 'crypto';
 
 //types
 import { toUserDTO } from './auth.mapper.js';
-import { TokenPayload } from 'google-auth-library';
 import { LoginInput, RegisterInput } from './auth.schema.js';
 import { LoginResponse, RefreshTokenResponse, SessionInfo, UserDTO, UserEntity } from './auth.types.js';
 
 //repository
 import * as authRepo from './repository/auth.repository.js';
 import * as sessionRepo from './repository/session.repository.js';
-import * as oauthRepo from './repository/oauth.repository.js';
 
 //tokens
 import { verifyAccessToken, verifyRefreshToken } from './auth.token.js';
 import { generateSessionTokens } from '../../shared/helpers/auth.token.helper.js';
-import { verifyGoogleToken } from '../oauth/google.service.js';
 
 /* ======================================
    REGISTER
@@ -123,56 +120,4 @@ export const singleLogoutService = async (refreshToken: string) => {
 export const allLogoutService = async (token: string) => {
   const decoded = verifyAccessToken(token);
   return await sessionRepo.deleteAllSessionsByUser(decoded.userId);
-};
-
-export const googleCallbackService = async (codeVerifier: string, code: string, sessionInfo: SessionInfo) => {
-  const payload = await verifyGoogleToken(codeVerifier, code);
-
-  const userDetails = await findOrCreateUserFromGoogle(payload);
-  //create tokens
-  const sessionId = crypto.randomUUID(); // create rendom session id
-  const { accessToken, refreshToken } = generateSessionTokens(userDetails.user_id, userDetails.role, sessionId);
-
-  const tokenHash = await bcrypt.hash(refreshToken, 10);
-
-  await sessionRepo.createSession({
-    sessionId,
-    userId: userDetails.user_id,
-    tokenHash,
-    deviceInfo: sessionInfo.deviceInfo,
-    ipAddress: sessionInfo.ipAddress,
-  });
-
-  const userDTO = toUserDTO(userDetails);
-  return { userDTO, accessToken, refreshToken };
-};
-
-const findOrCreateUserFromGoogle = async (payload: TokenPayload): Promise<UserEntity> => {
-  // check token got payload
-  const { sub, email, email_verified, name } = payload;
-
-  if (!email || !email_verified) throw new AppError(401, 'A verified email is required.');
-
-  const existingOauth = await oauthRepo.findOauthAccount('google', sub);
-
-  let userDetails;
-
-  if (existingOauth) {
-    const user = await authRepo.findUserByid(existingOauth.user_id);
-    userDetails = user;
-  } else {
-    const existingUser = await authRepo.findUserByEmail(email);
-
-    if (existingUser) {
-      userDetails = existingUser;
-    } else {
-      const user = await authRepo.createUser({ name: name || '', email, emailVerified: email_verified });
-      if (!user) throw new AppError(500, 'User not created please try again');
-      await oauthRepo.createOauthAccount(user.user_id, 'google', sub);
-      userDetails = user;
-    }
-  }
-
-  if (!userDetails) throw new AppError(500, 'User not created please try again');
-  return userDetails;
 };

@@ -1,5 +1,5 @@
-import { sql } from '../../../config/db.js';
-import { OauthEntity } from '../../oauth/oauth.type.js';
+import { sql } from '../../config/db.js';
+import { OauthEntity } from './oauth.type.js';
 
 export const findOauthAccount = async (provider: String, providerUserId: string): Promise<OauthEntity | null> => {
   const [account] = await sql`
