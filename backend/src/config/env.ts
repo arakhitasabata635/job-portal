@@ -30,6 +30,12 @@ const envSchema = z.object({
 
   OAUTH_STATE_COOKIE_MAX_AGE: z.coerce.number(),
   REFRESH_COOKIE_MAX_AGE: z.coerce.number(),
+
+  SMTP_HOST: z.string().min(1, 'SMTP Host is required'),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().email('SMTP User must be a valid email'),
+  SMTP_PASSWORD: z.string().min(1, 'SMTP Password is required'),
+  FRONT_END_URL: z.string(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -49,6 +55,7 @@ export const config = {
   port: data.PORT,
   node_env: data.NODE_ENV,
   db_url: data.DB_URL,
+  frontend_url: data.FRONT_END_URL,
   jwt: {
     access_token: {
       secret: data.ACCESS_TOKEN_SECRET,
@@ -70,5 +77,11 @@ export const config = {
   cookieTime: {
     oauth: data.OAUTH_STATE_COOKIE_MAX_AGE,
     refreshToken: data.REFRESH_COOKIE_MAX_AGE,
+  },
+  emailOption: {
+    smtpHost: data.SMTP_HOST,
+    smtpPort: data.SMTP_PORT,
+    smtpUser: data.SMTP_USER,
+    smtpPassword: data.SMTP_PASSWORD,
   },
 };

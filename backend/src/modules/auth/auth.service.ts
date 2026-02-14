@@ -12,6 +12,7 @@ import * as authRepo from './auth.repository.js';
 import * as sessionService from '../session/session.service.js';
 import * as passwordResetRepo from './password-reset.repository.js';
 import * as sessionRepo from '../session/session.repository.js';
+import { emailService } from '../email/email.service.js';
 
 /* ======================================
    REGISTER
@@ -75,6 +76,9 @@ export const forgotPasswordService = async (input: ForgotPasswordInput) => {
   await passwordResetRepo.create(user.user_id, tokenHash);
 
   //email sent function need
+
+  const resetLink = `${config.frontend_url}/reset-password?token=${rawToken}`;
+  await emailService.sendPasswordResetMail(input.email, resetLink);
 };
 
 export const resetPasswordService = async (input: ResetPasswordInput) => {
