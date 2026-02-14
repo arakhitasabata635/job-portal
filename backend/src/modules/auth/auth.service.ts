@@ -6,13 +6,9 @@ import crypto from 'crypto';
 //types
 import { toUserDTO } from './auth.mapper.js';
 import { LoginInput, RegisterInput } from './auth.schema.js';
-import { LoginResponse, SessionInfo, UserDTO, UserEntity } from './auth.types.js';
+import { LoginResponse, UserDTO } from './auth.types.js';
 
-//repository
 import * as authRepo from './auth.repository.js';
-
-//tokens
-import { verifyAccessToken, verifyRefreshToken } from '../session/auth.token.js';
 import * as sessionService from '../session/session.service.js';
 
 /* ======================================

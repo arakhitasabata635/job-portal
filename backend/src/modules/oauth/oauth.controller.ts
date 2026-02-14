@@ -9,11 +9,11 @@ import { Controller } from '../../types/controller.js';
 //functions
 import { sendSuccess } from '../../shared/response/response.js';
 import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
+import { generateUrlForGoogleOauth } from './providers/google.provider.js';
 
-//cookies
-import * as cookieOptions from '../auth/auth.cookies.js';
+import * as cookieOptions from './oauth.cookie.js';
 import { extractTokenFromCookie } from '../../shared/helpers/auth.token.helper.js';
-import { generateUrlForGoogleOauth, googleCallbackService } from './google.service.js';
+import { googleCallbackService } from './google.service.js';
 
 export const generateGoogleOauthURL: Controller = async (req, res, next) => {
   const { url, codeVerifier, state } = await generateUrlForGoogleOauth();
