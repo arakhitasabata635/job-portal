@@ -5,7 +5,7 @@ import crypto from 'crypto';
 
 //types
 import { toUserDTO } from './auth.mapper.js';
-import { LoginInput, RegisterInput } from './auth.schema.js';
+import { ForgotPasswordInput, LoginInput, RegisterInput } from './auth.schema.js';
 import { LoginResponse, UserDTO } from './auth.types.js';
 
 import * as authRepo from './auth.repository.js';
@@ -59,4 +59,10 @@ export const loginUserService = async (
   const { accessToken, refreshToken } = await sessionService.createSessionForUser(userDTO, deviceInfo, ipAddress);
 
   return { userDTO, accessToken, refreshToken };
+};
+
+export const forgotPasswordService = async (input: ForgotPasswordInput) => {
+  const user = await authRepo.findUserByEmail(input.email);
+
+  if (!user) return;
 };
