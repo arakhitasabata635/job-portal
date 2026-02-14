@@ -12,6 +12,6 @@ export const oAuthCookieOption: CookieOptions = {
   httpOnly: true,
   secure: isProd,
   sameSite: 'lax',
-  path: '/api/auth/google-callback',
+  path: '/api/oauth/google-callback',
   maxAge: 5 * 60 * 1000,
 };
