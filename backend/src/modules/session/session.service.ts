@@ -22,9 +22,9 @@ export const createSessionForUser = async (
   return { accessToken, refreshToken };
 };
 
-export const refreshSessionService = async (refreshToken: string): Promise<RefreshTokenResponse> => {
+export const refreshSessionService = async (oldRefreshToken: string): Promise<RefreshTokenResponse> => {
   //valid token
-  const decoded = verifyRefreshToken(refreshToken);
+  const decoded = verifyRefreshToken(oldRefreshToken);
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
   // session not in db
@@ -33,7 +33,7 @@ export const refreshSessionService = async (refreshToken: string): Promise<Refre
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
-  const match = await bcrypt.compare(refreshToken, session.token_hash);
+  const match = await bcrypt.compare(oldRefreshToken, session.token_hash);
   // bcrypt compare fail
   if (!match) {
     await sessionRepo.deleteAllSessionsByUser(decoded.userId);
@@ -44,13 +44,13 @@ export const refreshSessionService = async (refreshToken: string): Promise<Refre
   const user = await authRepo.findUserByid(decoded.userId);
   if (!user) throw new AppError(404, 'User no longer exist');
   //create tokens
-  const sessionId = crypto.randomUUID(); // create rendom session id
-  const { accessToken, refreshToken: newRefreshToken } = generateSessionTokens(user.user_id, user.role, sessionId);
+
+  const { accessToken, refreshToken } = generateSessionTokens(user.user_id, user.role, decoded.sessionId);
   // hash token and update db
-  const hashRefresh = await bcrypt.hash(newRefreshToken, 10);
+  const hashRefresh = await bcrypt.hash(refreshToken, 10);
   await sessionRepo.updateSessionToken(session.session_id, hashRefresh);
 
-  return { accessToken, refreshToken: newRefreshToken };
+  return { accessToken, refreshToken };
 };
 
 export const singleLogoutService = async (refreshToken: string) => {
@@ -59,7 +59,7 @@ export const singleLogoutService = async (refreshToken: string) => {
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
   if (!session) {
-    throw new AppError(204, 'Already logout');
+    throw new AppError(200, 'Already logout');
   }
   return await sessionRepo.deleteSessionById(decoded.sessionId);
 };

@@ -7,18 +7,17 @@ import { allLogoutService, refreshSessionService, singleLogoutService } from './
 import * as authCookieOptions from '../auth/auth.cookies.js';
 
 export const rrefreshSessionController: Controller = async (req, res, next) => {
-  const refreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
+  const oldRefreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
 
-  const { accessToken, refreshToken: newRefreshToken } = await refreshSessionService(refreshToken);
+  const { accessToken, refreshToken } = await refreshSessionService(oldRefreshToken);
 
-  res.cookie(config.jwt.refresh_token.cookie_name, newRefreshToken, authCookieOptions.cookieOption);
+  res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, authCookieOptions.cookieOption);
 
   return sendSuccess<{}>(res, { accessToken }, 'token created succefully', 200);
 };
 
 export const singleLogoutControler: Controller = async (req, res, next) => {
   const refreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
-
   const result = await singleLogoutService(refreshToken);
   res.clearCookie(config.jwt.refresh_token.cookie_name, authCookieOptions.clearCookieOption);
 
@@ -31,5 +30,5 @@ export const allLogoutController: Controller = async (req, res, next) => {
 
   res.clearCookie(config.jwt.refresh_token.cookie_name, authCookieOptions.clearCookieOption);
 
-  return sendSuccess<{}>(res, {}, 'Logout from all device is succefull', 204);
+  return sendSuccess<{}>(res, {}, 'Logout from all device is succefull', 200);
 };
