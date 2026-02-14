@@ -1,8 +1,6 @@
-import { CodeChallengeMethod, OAuth2Client, TokenPayload } from 'google-auth-library';
-import { config } from '../../config/env.js';
+import { TokenPayload } from 'google-auth-library';
 import { AppError } from '../../shared/errors/appError.js';
 
-import crypto from 'crypto';
 import { UserEntity } from '../auth/auth.types.js';
 import { createOauthAccount, findOauthAccount } from './oauth.repository.js';
 import { createUser, findUserByEmail, findUserByid } from '../auth/auth.repository.js';

@@ -1,5 +1,5 @@
 import { sql } from '../../config/db.js';
-import { SessionEntity } from '../auth/auth.types.js';
+import { SessionEntity } from './session.type.js';
 
 interface CreateSessionInput {
   sessionId: string;
