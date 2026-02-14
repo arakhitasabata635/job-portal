@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import * as jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -9,15 +10,26 @@ const envSchema = z.object({
   DB_URL: z.string().url(),
 
   ACCESS_TOKEN_SECRET: z.string().min(10),
-  ACCESS_TOKEN_EXPIRE: z.string().default('30m'),
+  ACCESS_TOKEN_EXPIRE: z
+    .string()
+    .regex(/^\d+(s|m|h|d)$/)
+    .transform((val) => val as jwt.SignOptions['expiresIn'])
+    .default('30m'),
 
   REFRESH_TOKEN_SECRET: z.string().min(10),
-  REFRESH_TOKEN_EXPIRE: z.string().default('7d'),
+  REFRESH_TOKEN_EXPIRE: z
+    .string()
+    .regex(/^\d+(s|m|h|d)$/)
+    .transform((val) => val as jwt.SignOptions['expiresIn'])
+    .default('7d'),
   REFRESH_TOKEN_COOKIE_NAME: z.string(),
 
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_REDIRECT_URI: z.string(),
+
+  OAUTH_STATE_COOKIE_MAX_AGE: z.coerce.number(),
+  REFRESH_COOKIE_MAX_AGE: z.coerce.number(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -54,5 +66,9 @@ export const config = {
       client_secret: data.GOOGLE_CLIENT_SECRET,
       redirect_url: data.GOOGLE_REDIRECT_URI,
     },
+  },
+  cookieTime: {
+    oauth: data.OAUTH_STATE_COOKIE_MAX_AGE,
+    refreshToken: data.REFRESH_COOKIE_MAX_AGE,
   },
 };

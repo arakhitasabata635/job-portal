@@ -8,7 +8,7 @@ export const refreshTokenCookieOption: CookieOptions = {
   httpOnly: true,
   secure: isProd,
   sameSite: 'strict',
-  maxAge: 7 * 24 * 60 * 60 * 1000,
+  maxAge: config.cookieTime.refreshToken,
 };
 
 export const oAuthCookieOption: CookieOptions = {
@@ -16,7 +16,7 @@ export const oAuthCookieOption: CookieOptions = {
   secure: isProd,
   sameSite: 'lax',
   path: '/api/oauth/google-callback',
-  maxAge: 5 * 60 * 1000,
+  maxAge: config.cookieTime.oauth,
 };
 
 export const clearCookieOption: CookieOptions = {

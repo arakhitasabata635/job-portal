@@ -16,11 +16,11 @@ interface AccessPayload {
 }
 
 const generateAccessToken = (data: AccessPayload) => {
-  return jwt.sign(data, accessSecreate, { expiresIn: '1h' });
+  return jwt.sign(data, accessSecreate, { expiresIn: config.jwt.access_token.expire });
 };
 
 const generateRefreshToken = (data: RefreshPayload) => {
-  return jwt.sign(data, refreshSecret, { expiresIn: '7h' });
+  return jwt.sign(data, refreshSecret, { expiresIn: config.jwt.refresh_token.expire });
 };
 
 export const generateSessionTokens = (userId: string, role: UserRole, sessionId: string) => {
