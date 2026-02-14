@@ -84,12 +84,11 @@ async function initDb() {
 
     await sql`
   CREATE TABLE IF NOT EXISTS password_reset_tokens(
-  id UUID DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   token_hash TEXT NOT NULL,
   used BOOLEAN DEFAULT FALSE ,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '7 days')
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '10 minutes')
   )
   `;
 
