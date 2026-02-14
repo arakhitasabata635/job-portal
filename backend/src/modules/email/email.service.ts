@@ -6,12 +6,12 @@ class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
+      host: config.emailOption.smtpHost,
+      port: config.emailOption.smtpPort,
       secure: false,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: config.emailOption.smtpUser,
+        pass: config.emailOption.smtpPassword,
       },
     });
   }
