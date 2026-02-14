@@ -11,9 +11,9 @@ import { UserDTO } from './auth.types.js';
 //functions
 import { sendSuccess } from '../../shared/response/response.js';
 import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
+import * as cookie from '../../shared/helpers/cookie.helper.js';
 
 //cookies
-import * as cookieOptions from './auth.cookies.js';
 
 export const registerUserController: Controller = async (req, res, next) => {
   let createdUser = await registerUserService(req.body);
@@ -21,15 +21,12 @@ export const registerUserController: Controller = async (req, res, next) => {
 };
 
 export const loginUserController: Controller = async (req, res, next) => {
-  if (req.cookies[config.jwt.refresh_token.cookie_name])
-    res.clearCookie(config.jwt.refresh_token.cookie_name, cookieOptions.clearCookieOption);
-
   const deviceInfo = getDeviceInfo(req);
   const ipAddress = getIp(req);
 
   const { userDTO, accessToken, refreshToken } = await loginUserService(req.body, deviceInfo, ipAddress);
 
-  res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookieOptions.cookieOption);
+  res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookie.refreshTokenCookieOption);
 
   return sendSuccess<{}>(res, { userDTO, accessToken }, 'user Login successfully', 200);
 };

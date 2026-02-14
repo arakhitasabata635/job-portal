@@ -20,18 +20,7 @@ export interface UserEntity {
   created_at: Date;
   subscription?: Date | null;
 }
-/* ================================
-   session entity
-================================ */
-export interface SessionEntity {
-  session_id: string;
-  user_id: string;
-  token_hash: string;
-  device_info: string;
-  ip_address: string | null;
-  created_at: Date;
-  expires_at: Date;
-}
+
 /* ================================
    Safe API Response DTO
    Never include password

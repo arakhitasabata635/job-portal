@@ -1,16 +1,6 @@
 import { Request } from 'express';
 import { AppError } from '../errors/appError.js';
 
-export const extractTokenFromCookie = (req: Request, tokenName: string): string => {
-  const token = req.cookies?.[tokenName];
-
-  if (!token) {
-    throw new AppError(401, `${tokenName} is missing.`);
-  }
-
-  return token;
-};
-
 export const extractAccesToken = (req: Request): string => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {

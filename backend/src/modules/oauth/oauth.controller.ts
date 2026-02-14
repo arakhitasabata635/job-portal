@@ -11,15 +11,14 @@ import { sendSuccess } from '../../shared/response/response.js';
 import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
 import { generateUrlForGoogleOauth } from './providers/google.provider.js';
 
-import * as cookieOptions from './oauth.cookie.js';
-import { extractTokenFromCookie } from '../../shared/helpers/auth.token.helper.js';
+import * as cookie from '../../shared/helpers/cookie.helper.js';
 import { googleCallbackService } from './google.service.js';
 
 export const generateGoogleOauthURL: Controller = async (req, res, next) => {
   const { url, codeVerifier, state } = await generateUrlForGoogleOauth();
 
-  res.cookie('pkce_verifier', codeVerifier, cookieOptions.oAuthCookieOption);
-  res.cookie('google_state', state, cookieOptions.oAuthCookieOption);
+  res.cookie('pkce_verifier', codeVerifier, cookie.oAuthCookieOption);
+  res.cookie('google_state', state, cookie.oAuthCookieOption);
 
   res.redirect(url);
 };
@@ -27,8 +26,8 @@ export const generateGoogleOauthURL: Controller = async (req, res, next) => {
 export const googleCallbackController: Controller = async (req, res, next) => {
   const { state, code } = req.query;
 
-  const codeVerifier = extractTokenFromCookie(req, 'pkce_verifier');
-  const google_state = extractTokenFromCookie(req, 'google_state');
+  const codeVerifier = cookie.extractTokenFromCookie(req, 'pkce_verifier');
+  const google_state = cookie.extractTokenFromCookie(req, 'google_state');
 
   if (!(state && code && state === google_state)) throw new AppError(404, 'invalid session please try again');
 
@@ -42,6 +41,6 @@ export const googleCallbackController: Controller = async (req, res, next) => {
     ipAddress,
   );
 
-  res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookieOptions.cookieOption);
+  res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookie.refreshTokenCookieOption);
   return sendSuccess<{}>(res, { user: userDTO, accessToken }, 'user Login successfully', 200);
 };
