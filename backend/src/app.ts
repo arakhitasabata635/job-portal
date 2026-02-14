@@ -1,6 +1,6 @@
 import express from 'express';
 import { globalErrorHandler } from './shared/middleware/error.middleware.js';
-import { authRouter, oauthRouter } from './routes/index.js';
+import { authRouter, oauthRouter, sessionRoute } from './routes/index.js';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -28,7 +28,7 @@ if (config.node_env === 'production') {
   app.use('/api/auth', authLimiter);
   app.use('/api/oauth', authLimiter);
 }
-
+app.use('/api/session', sessionRoute);
 app.use('/api/auth', authRouter);
 app.use('/api/oauth', oauthRouter);
 
