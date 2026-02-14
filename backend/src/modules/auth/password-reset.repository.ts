@@ -2,7 +2,7 @@ import { sql } from '../../config/db.js';
 
 interface ResetPasswordSchema {
   id: string;
-  userId: string;
+  user_id: string;
   token_hash: string;
   used: boolean;
   expires_at: Date;
@@ -17,15 +17,14 @@ export const create = async (userId: string, token_hash: string) => {
 };
 
 export const findByHashToken = async (token_hash: string): Promise<ResetPasswordSchema | null> => {
-  const [session] = await sql`
+  const [record] = await sql`
     SELECT *
     FROM password_reset_tokens
     WHERE token_hash = ${token_hash}
-      AND used = FALSE
       AND expires_at > NOW()
   `;
 
-  return session ? (session as ResetPasswordSchema) : null;
+  return record ? (record as ResetPasswordSchema) : null;
 };
 
 export const markUsed = async (id: string) => {

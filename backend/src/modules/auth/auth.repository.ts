@@ -54,3 +54,11 @@ export const createUser = async (data: CreateUserInput): Promise<UserEntity | nu
   const findUser = user as UserEntity;
   return findUser;
 };
+
+export const updatePassword = async (userId: string, password: string) => {
+  await sql`
+  UPDATE users
+  SET password = ${password}
+  WHERE user_id= ${userId}
+  `;
+};

@@ -5,11 +5,13 @@ import crypto from 'crypto';
 
 //types
 import { toUserDTO } from './auth.mapper.js';
-import { ForgotPasswordInput, LoginInput, RegisterInput } from './auth.schema.js';
+import { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from './auth.schema.js';
 import { LoginResponse, UserDTO } from './auth.types.js';
 
 import * as authRepo from './auth.repository.js';
 import * as sessionService from '../session/session.service.js';
+import * as passwordResetRepo from './password-reset.repository.js';
+import * as sessionRepo from '../session/session.repository.js';
 
 /* ======================================
    REGISTER
@@ -60,7 +62,9 @@ export const loginUserService = async (
 
   return { userDTO, accessToken, refreshToken };
 };
-
+/* ======================================
+   FORGOT PASSOWORD
+====================================== */
 export const forgotPasswordService = async (input: ForgotPasswordInput) => {
   const user = await authRepo.findUserByEmail(input.email);
 
@@ -68,4 +72,25 @@ export const forgotPasswordService = async (input: ForgotPasswordInput) => {
 
   const rawToken = crypto.randomBytes(32).toString('hex');
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  await passwordResetRepo.create(user.user_id, tokenHash);
+
+  //email sent function need
+};
+
+export const resetPasswordService = async (input: ResetPasswordInput) => {
+  const tokenHash = crypto.createHash('sha256').update(input.token).digest('hex');
+
+  const record = await passwordResetRepo.findByHashToken(tokenHash);
+  if (!record)
+    throw new AppError(404, 'Your reset link is got Expired or Invalid.  Please request a new one to continue.');
+  if (record.used)
+    throw new AppError(404, 'This link has already been used. If you still need help, request a new link.');
+
+  const hashPassword = await bcrypt.hash(input.password, 10);
+
+  await authRepo.updatePassword(record.user_id, hashPassword);
+
+  await passwordResetRepo.markUsed(record.id);
+
+  await sessionRepo.deleteAllSessionsByUser(record.user_id);
 };
