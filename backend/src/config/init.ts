@@ -82,6 +82,24 @@ async function initDb() {
   );
   `;
 
+    await sql`
+  CREATE TABLE IF NOT EXISTS password_reset_tokens(
+  id UUID DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL,
+  used BOOLEAN DEFAULT FALSE ,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '7 days')
+  )
+  `;
+
+    await sql`
+  CREATE INDEX IF NOT EXISTS idx_token_hash 
+  ON password_reset_tokens(token_hash)`;
+    await sql`
+  CREATE INDEX IF NOT EXISTS idx_token_hash_expires 
+  ON password_reset_tokens(expires_at);`;
+
     console.log('✅ database table checked and created');
   } catch (error) {
     console.log('❌ ERROR INITIALIZING DATABASE', error);

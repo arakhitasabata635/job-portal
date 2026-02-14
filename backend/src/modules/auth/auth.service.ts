@@ -65,4 +65,7 @@ export const forgotPasswordService = async (input: ForgotPasswordInput) => {
   const user = await authRepo.findUserByEmail(input.email);
 
   if (!user) return;
+
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 };
