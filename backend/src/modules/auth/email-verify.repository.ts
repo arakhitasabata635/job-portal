@@ -25,3 +25,9 @@ export const deleteToken = async (token_hash: string) => {
    WHERE token_hash = ${token_hash}
   `;
 };
+export const deleteTokenByUserId = async (user_id: string) => {
+  await sql`
+   DELETE email_verify_tokens
+   WHERE user_id = ${user_id}
+  `;
+};

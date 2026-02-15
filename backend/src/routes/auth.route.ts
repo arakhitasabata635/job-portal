@@ -7,6 +7,7 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resentEmailVerifySchema,
   resetPasswordSchema,
 } from '../modules/auth/auth.schema.js';
 
@@ -22,5 +23,10 @@ authRouter.post(
 authRouter.post('/reset-password', validate(resetPasswordSchema), asyncHandler(authController.resetPasswordController));
 
 authRouter.post('/verify-email', validate(emailVerifySchema), asyncHandler(authController.emailVerifyControler));
+authRouter.post(
+  '/resend-verifyEmail',
+  validate(resentEmailVerifySchema),
+  asyncHandler(authController.resentEmailVerification),
+);
 
 export default authRouter;

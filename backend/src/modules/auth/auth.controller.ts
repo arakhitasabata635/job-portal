@@ -46,3 +46,7 @@ export const emailVerifyControler: Controller = async (req, res, next) => {
   await authService.emailVerifyService(req.body);
   return sendSuccess<{}>(res, {}, 'Email verification done . Login Now.', 200);
 };
+export const resentEmailVerification: Controller = async (req, res, next) => {
+  await authService.resentEmailVerification(req.body);
+  return sendSuccess<{}>(res, {}, 'If account exists, verification email sent', 200);
+};

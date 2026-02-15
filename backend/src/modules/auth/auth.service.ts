@@ -5,7 +5,14 @@ import crypto from 'crypto';
 
 //types
 import { toUserDTO } from './auth.mapper.js';
-import { EmailVerifyInput, ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from './auth.schema.js';
+import {
+  EmailVerifyInput,
+  ForgotPasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResentEmailVerifySchema,
+  ResetPasswordInput,
+} from './auth.schema.js';
 import { LoginResponse, UserDTO } from './auth.types.js';
 
 import * as authRepo from './auth.repository.js';
@@ -120,4 +127,22 @@ export const emailVerifyService = async (input: EmailVerifyInput) => {
   await authRepo.markEmailVerified(record.user_id);
 
   await emailVerificationRepo.deleteToken(token_hash);
+};
+
+export const resentEmailVerification = async (input: ResentEmailVerifySchema) => {
+  const user = await authRepo.findUserByEmail(input.email);
+
+  if (!user) return;
+  if (user.email_verified) return;
+
+  await emailVerificationRepo.deleteTokenByUserId(user.user_id);
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const token_hash = crypto.createHash('sha256').update(token).digest('hex');
+
+  await emailVerificationRepo.create(user.user_id, token_hash);
+
+  //send verify email link
+  const verifyLink = `${config.frontend_url}/verify-email?token=${token}`;
+  await emailService.sendVarifyEmail(user.email, verifyLink);
 };
