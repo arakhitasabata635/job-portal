@@ -28,6 +28,18 @@ class EmailService {
       `,
     });
   }
+  async sendVarifyEmail(email: string, verifyLink: string) {
+    await this.transporter.sendMail({
+      from: `${config.emailOption.smtpUser}`,
+      to: email,
+      subject: 'Verify Email',
+      html: `
+      <h3>Verify Email</h3>
+      <a href="${verifyLink}">Verify Email</a>
+      <p>Click this link to Verify your email</p>
+      `,
+    });
+  }
 }
 
 export const emailService = new EmailService();

@@ -13,6 +13,7 @@ import * as sessionService from '../session/session.service.js';
 import * as passwordResetRepo from './password-reset.repository.js';
 import * as sessionRepo from '../session/session.repository.js';
 import { emailService } from '../email/email.service.js';
+import * as emailRepo from './email-verify.repository.js';
 
 /* ======================================
    REGISTER
@@ -37,6 +38,15 @@ export const registerUserService = async (input: RegisterInput): Promise<UserDTO
     throw new AppError(500, 'An unexpected error occurred. Please try again.');
   }
 
+  const token = crypto.randomBytes(32).toString('hex');
+  const token_hash = crypto.createHash('sha256').update(token).digest('hex');
+
+  await emailRepo.create(user.user_id, token_hash);
+
+  //send verify email link
+  const verifyLink = `${config.frontend_url}/verify-email?token=${token}`;
+  await emailService.sendVarifyEmail(user.email, verifyLink);
+
   const userDTO = toUserDTO(user);
   return userDTO;
 };
@@ -52,6 +62,9 @@ export const loginUserService = async (
   const user = await authRepo.findUserByEmail(input.email);
 
   if (!user) throw new AppError(401, 'Invalid email or password');
+  if (!user.email_verified) {
+    throw new Error('Please verify your email first');
+  }
   if (!user.password) throw new AppError(401, 'Invalid email or password');
 
   const passMatch = await bcrypt.compare(input.password, user.password);
