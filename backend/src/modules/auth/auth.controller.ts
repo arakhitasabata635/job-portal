@@ -42,3 +42,7 @@ export const resetPasswordController: Controller = async (req, res, next) => {
   await authService.resetPasswordService(req.body);
   return sendSuccess<{}>(res, {}, 'Password update successfully', 200);
 };
+export const emailVerifyControler: Controller = async (req, res, next) => {
+  await authService.emailVerifyService(req.body);
+  return sendSuccess<{}>(res, {}, 'Email verification done . Login Now.', 200);
+};
