@@ -35,7 +35,7 @@ class EmailService {
       subject: 'Verify Email',
       html: `
       <h3>Verify Email</h3>
-      <a href="${verifyLink}">Verify Email</a>
+      <a href="${verifyLink}">${verifyLink}</a>
       <p>Click this link to Verify your email</p>
       `,
     });
