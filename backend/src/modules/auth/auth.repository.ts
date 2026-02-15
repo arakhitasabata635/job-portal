@@ -62,3 +62,11 @@ export const updatePassword = async (userId: string, password: string) => {
   WHERE user_id= ${userId}
   `;
 };
+
+export const markEmailVerified = async (userId: string) => {
+  await sql`
+  UPDATE users
+  SET email_verified = TRUE
+  WHERE user_id= ${userId}
+  `;
+};

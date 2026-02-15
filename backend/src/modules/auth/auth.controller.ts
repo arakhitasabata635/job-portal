@@ -12,11 +12,14 @@ import { sendSuccess } from '../../shared/response/response.js';
 import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
 import * as cookie from '../../shared/helpers/cookie.helper.js';
 
-//cookies
-
 export const registerUserController: Controller = async (req, res, next) => {
   let createdUser = await authService.registerUserService(req.body);
-  return sendSuccess<UserDTO>(res, createdUser, 'user created successfully', 200);
+  return sendSuccess<UserDTO>(
+    res,
+    createdUser,
+    'user created successfully and sent a email verification link to the given email',
+    200,
+  );
 };
 
 export const loginUserController: Controller = async (req, res, next) => {
