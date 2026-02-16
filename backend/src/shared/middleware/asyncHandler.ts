@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
-import { controller } from '../../types/controller.js';
+import { Controller } from '../../types/controller.js';
 
 export const asyncHandler =
-  (controller: controller): RequestHandler =>
+  (controller: Controller): RequestHandler =>
   async (req, res, next) => {
     try {
       const result = await controller(req, res, next);

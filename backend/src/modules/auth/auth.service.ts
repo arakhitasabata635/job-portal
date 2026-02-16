@@ -68,14 +68,14 @@ export const loginUserService = async (
 ): Promise<LoginResponse> => {
   const user = await authRepo.findUserByEmail(input.email);
 
-  if (!user) throw new AppError(401, 'Invalid email or password');
+  if (!user) throw new AppError(404, 'Invalid email or password');
   if (!user.email_verified) {
-    throw new Error('Please verify your email first');
+    throw new AppError(403, 'Please verify your email first');
   }
-  if (!user.password) throw new AppError(401, 'Invalid email or password');
+  if (!user.password) throw new AppError(404, 'Invalid email or password');
 
   const passMatch = await bcrypt.compare(input.password, user.password);
-  if (!passMatch) throw new AppError(401, 'Invalid email or password');
+  if (!passMatch) throw new AppError(400, 'Invalid email or password');
 
   const userDTO = toUserDTO(user);
 
@@ -106,9 +106,9 @@ export const resetPasswordService = async (input: ResetPasswordInput) => {
 
   const record = await passwordResetRepo.findByHashToken(tokenHash);
   if (!record)
-    throw new AppError(404, 'Your reset link is got Expired or Invalid.  Please request a new one to continue.');
+    throw new AppError(401, 'Your reset link is got Expired or Invalid.  Please request a new one to continue.');
   if (record.used)
-    throw new AppError(404, 'This link has already been used. If you still need help, request a new link.');
+    throw new AppError(401, 'This link has already been used. If you still need help, request a new link.');
 
   const hashPassword = await bcrypt.hash(input.password, 10);
 
@@ -123,7 +123,7 @@ export const emailVerifyService = async (input: EmailVerifyInput) => {
   const token_hash = crypto.createHash('sha256').update(input.token).digest('hex');
   const record = await emailVerificationRepo.findByHashToken(token_hash);
 
-  if (!record) throw new AppError(404, 'Your link is got Expired or Invalid.  Please request a new one to continue.');
+  if (!record) throw new AppError(401, 'Your link is got Expired or Invalid.  Please request a new one to continue.');
   await authRepo.markEmailVerified(record.user_id);
 
   await emailVerificationRepo.deleteToken(token_hash);

@@ -18,7 +18,7 @@ export const registerUserController: Controller = async (req, res, next) => {
     res,
     createdUser,
     'user created successfully and sent a email verification link to the given email',
-    200,
+    201,
   );
 };
 

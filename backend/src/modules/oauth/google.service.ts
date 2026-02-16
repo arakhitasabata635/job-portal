@@ -29,7 +29,7 @@ const findOrCreateUserFromGoogle = async (payload: TokenPayload): Promise<UserEn
   // check token got payload
   const { sub, email, email_verified, name } = payload;
 
-  if (!email || !email_verified) throw new AppError(401, 'A verified email is required.');
+  if (!email || !email_verified) throw new AppError(400, 'A verified email is required.');
 
   const existingOauth = await findOauthAccount('google', sub);
 
