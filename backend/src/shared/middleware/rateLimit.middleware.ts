@@ -2,7 +2,7 @@ import rateLimit from 'express-rate-limit';
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10, // Limit each IP to 10 login attempts
+  max: 20, // Limit each IP to 10 login attempts
   skipSuccessfulRequests: true,
   standardHeaders: true, // Return rate limit info in headers
   legacyHeaders: false, // it gave the value with out x-

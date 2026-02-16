@@ -1,3 +1,4 @@
+import { config } from './config/env.js';
 import express from 'express';
 import { globalErrorHandler } from './shared/middleware/error.middleware.js';
 import { authRouter, oauthRouter, sessionRoute } from './routes/index.js';
@@ -5,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import { authLimiter } from './shared/middleware/rateLimit.middleware.js';
-import { config } from './config/env.js';
+import { startNightCleanup } from './jobs/cleanUp.job.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -36,5 +37,7 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 app.use(globalErrorHandler);
+
+startNightCleanup(); //db cleanUp function
 
 export default app;
