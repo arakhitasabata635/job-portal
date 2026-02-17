@@ -142,4 +142,58 @@
  *           example: {}
  */
 
+// reset password component
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     ResetPasswordInput:
+ *       type: object
+ *       required:
+ *         - token
+ *         - password
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: Raw reset token received in email
+ *           example: 8f9c3a4b2e6d...
+ *         password:
+ *           type: string
+ *           minLength: 6
+ *           example: NewPass@123
+ */
+
+// email verification component
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     EmailVerifyInput:
+ *       type: object
+ *       required:
+ *         - token
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: Raw verification token received in email
+ *           example: 7d8a9c3b1e5f...
+ */
+
+//resend email verification
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     ResendEmailVerifyInput:
+ *       type: object
+ *       required:
+ *         - email
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: user@example.com
+ */
+
 export {}; // this tell that this file is a module file

@@ -143,4 +143,125 @@
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 
+// reset password api
+/**
+ * @openapi
+ * /auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Reset user password
+ *     description: Validates reset token and updates password. Invalidates all active sessions.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResetPasswordInput'
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponseEmpty'
+ *       401:
+ *         description: Invalid or expired reset token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+// email verification api
+
+/**
+ * @openapi
+ * /auth/verify-email:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Verify user email
+ *     description: Validates email verification token and marks email as verified.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/EmailVerifyInput'
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponseEmpty'
+ *       401:
+ *         description: Invalid or expired verification token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+// resend email verification api
+/**
+ * @openapi
+ * /auth/resend-verification:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Resend email verification link
+ *     description: Sends a new verification email if the account exists and is not verified.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResendEmailVerifyInput'
+ *     responses:
+ *       200:
+ *         description: Verification email sent (if account exists)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponseEmpty'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
 export {};
