@@ -36,7 +36,15 @@ app.use('/api/session', sessionRoute);
 app.use('/api/auth', authRouter);
 app.use('/api/oauth', oauthRouter);
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      withCredentials: true,
+    },
+  }),
+);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
