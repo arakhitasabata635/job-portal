@@ -6,7 +6,9 @@
  *     tags:
  *       - Session
  *     summary: Refresh access token
- *     description: Generates a new access token and refresh token using a valid refresh token stored in HttpOnly cookie.
+ *     description: Generates a new access token and refresh token using a valid HttpOnly refresh token cookie.
+ *     security:
+ *       - refreshCookie: []
  *     responses:
  *       200:
  *         description: Token created successfully

@@ -16,6 +16,11 @@ export const swaggerSpec = swaggerJSDoc({
           scheme: 'bearer',
           bearerFormat: 'JWT',
         },
+        refreshCookie: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'refreshToken',
+        },
       },
     },
   },
