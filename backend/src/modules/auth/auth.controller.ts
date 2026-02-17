@@ -34,7 +34,7 @@ export const loginUserController: Controller = async (req, res, next) => {
 };
 
 export const forgotpasswordController: Controller = async (req, res, next) => {
-  authService.forgotPasswordService(req.body);
+  await authService.forgotPasswordService(req.body);
   return sendSuccess<{}>(res, {}, 'If an account exists with that email, a password reset link has been sent.', 200);
 };
 

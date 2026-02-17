@@ -1,3 +1,5 @@
+//resister component
+
 /**
  * @openapi
  * components:
@@ -70,4 +72,74 @@
  *         message:
  *           type: string
  */
-export {};
+
+//login component
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     LoginInput:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: arakhita@gmail.com
+ *         password:
+ *           type: string
+ *           example: Test@123
+ *
+ *     LoginResponseData:
+ *       type: object
+ *       properties:
+ *         userDTO:
+ *           $ref: '#/components/schemas/User'
+ *         accessToken:
+ *           type: string
+ *
+ *     SuccessResponseLogin:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *         message:
+ *           type: string
+ *         data:
+ *           $ref: '#/components/schemas/LoginResponseData'
+ */
+
+//ForgotPassword components
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     ForgotPasswordInput:
+ *       type: object
+ *       required:
+ *         - email
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: arakhita@gmail.com
+ *
+ *     SuccessResponseEmpty:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ *           example: {}
+ */
+
+export {}; // this tell that this file is a module file
