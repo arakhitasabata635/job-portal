@@ -1,21 +1,21 @@
 /**
  * @openapi
  * components:
- *  schemas:
- *    resisterInput:
- *      type: object
- *      required:
- *        -name
- *        -email
- *        -password
- *        -phoneNumber
- *        -role
- *      properties:
- *        name:
- *          type: string
- *          minLength: 3
- *          example: Arakhita
- *        email:
+ *   schemas:
+ *     RegisterInput:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *         - password
+ *         - phoneNumber
+ *         - role
+ *       properties:
+ *         name:
+ *           type: string
+ *           minLength: 3
+ *           example: Arakhita
+ *         email:
  *           type: string
  *           format: email
  *           example: arakhita@gmail.com
@@ -30,7 +30,8 @@
  *         role:
  *           type: string
  *           enum: [jobseeker, recruiter]
- *    User:
+ *
+ *     User:
  *       type: object
  *       properties:
  *         userId:
@@ -48,16 +49,19 @@
  *         createdAt:
  *           type: string
  *           format: date-time
- *     successResponseUser:
- *      type:object
- *      properties:
- *        message:
- *          type: string
- *        success:
- *          type:boolean
- *          example: true
- *        data:
- *    ErrorResponse:
+ *
+ *     SuccessResponseUser:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           example: true
+ *         message:
+ *           type: string
+ *         data:
+ *           $ref: '#/components/schemas/User'
+ *
+ *     ErrorResponse:
  *       type: object
  *       properties:
  *         success:
@@ -66,3 +70,4 @@
  *         message:
  *           type: string
  */
+export {};
