@@ -6,7 +6,10 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import { authLimiter } from './shared/middleware/rateLimit.middleware.js';
-import { startNightCleanup } from './jobs/cleanUp.job.js';
+import { startNightCleanup } from './jobs/cleanup.job.js';
+
+import { swaggerSpec } from './config/swagger.js';
+import swaggerUi from 'swagger-ui-express';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -32,6 +35,8 @@ if (config.node_env === 'production') {
 app.use('/api/session', sessionRoute);
 app.use('/api/auth', authRouter);
 app.use('/api/oauth', oauthRouter);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
