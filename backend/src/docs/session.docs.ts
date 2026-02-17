@@ -1,7 +1,7 @@
 // refresh token rotation api
 /**
  * @openapi
- * /api/session/refresh:
+ * /session/refresh:
  *   post:
  *     tags:
  *       - Session
@@ -30,9 +30,10 @@
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 
+// single logout api
 /**
  * @openapi
- * /api/session/logout:
+ * /session/logout:
  *   post:
  *     tags:
  *       - Session
@@ -47,6 +48,39 @@
  *               $ref: '#/components/schemas/SuccessResponseEmpty'
  *       401:
  *         description: Invalid or missing refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+//all session logout
+
+/**
+ * @openapi
+ * /session/logout-all:
+ *   post:
+ *     tags:
+ *       - Session
+ *     summary: Logout from all devices
+ *     description: Deletes all active sessions for the authenticated user and clears the refresh token cookie.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out from all devices
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponseEmpty'
+ *       401:
+ *         description: Unauthorized or invalid access token
  *         content:
  *           application/json:
  *             schema:
