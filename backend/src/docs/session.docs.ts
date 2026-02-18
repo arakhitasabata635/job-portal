@@ -39,6 +39,8 @@
  *       - Session
  *     summary: Logout current session
  *     description: Logs out the current device by deleting the session and clearing the refresh token cookie.
+ *     security:
+ *       - refreshCookie: []
  *     responses:
  *       200:
  *         description: Logout successfully
