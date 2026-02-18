@@ -31,8 +31,7 @@ export const updateSessionToken = async (sessionId: string, newTokenHash: string
   await sql`
     UPDATE refresh_tokens
     SET token_hash = ${newTokenHash},
-    created_at = NOW(),
-    expires_at = NOW() + INTERVAL '7 days'
+    created_at = NOW()
     WHERE session_id = ${sessionId};
   `;
 };

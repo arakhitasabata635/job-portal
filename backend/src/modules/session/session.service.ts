@@ -30,19 +30,26 @@ export const createSessionForUser = async (
 };
 
 export const refreshSessionService = async (oldRefreshToken: string): Promise<RefreshTokenResponse> => {
-  //valid token
+  //only validate secreate key not expiry
   const decoded = verifyRefreshToken(oldRefreshToken);
 
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
-  // session not in db
+  // session not in db means reuse token
   if (!session) {
     await sessionRepo.deleteAllSessionsByUser(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
+  // check the expiry of the token
+  if (decoded.exp! * 1000 < Date.now()) {
+    await sessionRepo.deleteSessionById(session.session_id);
+    throw new AppError(401, 'Refresh token expired');
+  }
+
   const hashToken = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
-  // bcrypt compare fail
+
+  // heandle the active session reuse detaction
   if (hashToken !== session.token_hash) {
     await sessionRepo.deleteAllSessionsByUser(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
@@ -55,7 +62,7 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
 
   const { accessToken, refreshToken } = generateSessionTokens(user.user_id, user.role, decoded.sessionId);
   // hash token and update db
-  const hashRefresh = await bcrypt.hash(refreshToken, 10);
+  const hashRefresh = crypto.createHash('sha256').update(refreshToken).digest('hex');
   await sessionRepo.updateSessionToken(session.session_id, hashRefresh);
 
   return { accessToken, refreshToken };

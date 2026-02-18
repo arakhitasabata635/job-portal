@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AppError } from '../../shared/errors/appError.js';
 import { config } from '../../config/env.js';
 import { UserRole } from '../../types/role.js';
@@ -49,11 +49,8 @@ export const verifyAccessToken = (token: string): AccessPayload => {
 
 export const verifyRefreshToken = (token: string) => {
   try {
-    return jwt.verify(token, refreshSecret) as RefreshPayload;
+    return jwt.verify(token, refreshSecret, { ignoreExpiration: true }) as JwtPayload;
   } catch (error: any) {
-    if (error.name === 'TokenExpiredError') {
-      throw new AppError(401, 'Refresh token expired');
-    }
     throw new AppError(401, 'Invalid refresh token');
   }
 };
