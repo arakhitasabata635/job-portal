@@ -7,6 +7,7 @@ import { RefreshTokenResponse } from './session.type.js';
 import * as authRepo from '../auth/auth.repository.js';
 import * as sessionRepo from './session.repository.js';
 import { UserDTO } from '../auth/auth.types.js';
+import crypto from 'crypto';
 
 export const createSessionForUser = async (
   userDTO: UserDTO,
@@ -16,8 +17,14 @@ export const createSessionForUser = async (
   const sessionId = crypto.randomUUID(); // create rendom session id
   const { accessToken, refreshToken } = generateSessionTokens(userDTO.userId, userDTO.role, sessionId);
   // hash token and update db
-  const tokenHash = await bcrypt.hash(refreshToken, 10);
-  await sessionRepo.createSession({ sessionId, userId: userDTO.userId, tokenHash, deviceInfo, ipAddress });
+  const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  await sessionRepo.createSession({
+    sessionId,
+    userId: userDTO.userId,
+    tokenHash,
+    deviceInfo,
+    ipAddress,
+  });
 
   return { accessToken, refreshToken };
 };
@@ -25,6 +32,7 @@ export const createSessionForUser = async (
 export const refreshSessionService = async (oldRefreshToken: string): Promise<RefreshTokenResponse> => {
   //valid token
   const decoded = verifyRefreshToken(oldRefreshToken);
+
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
   // session not in db
@@ -33,9 +41,9 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
-  const match = await bcrypt.compare(oldRefreshToken, session.token_hash);
+  const hashToken = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
   // bcrypt compare fail
-  if (!match) {
+  if (hashToken !== session.token_hash) {
     await sessionRepo.deleteAllSessionsByUser(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
