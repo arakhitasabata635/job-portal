@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     // 📁 Where your TypeScript source files live
-    "rootDir": "./src",
+    "rootDir": ".",
 
     // 📦 Where compiled JavaScript files will be generated
     "outDir": "./dist",
@@ -16,7 +16,7 @@
     "moduleResolution": "NodeNext",
 
     // 🧠 Adds Node.js global types (process, __dirname, Buffer, fs, path, etc.)
-    "types": ["node"],
+    "types": ["node", "jest"],
 
     // 🔐 Makes array/object access safer (forces undefined checks)
     "noUncheckedIndexedAccess": true,
@@ -35,5 +35,6 @@
 
     // ⚡ Skips type checking inside node_modules for faster builds
     "skipLibCheck": true
-  }
+  },
+  "include": ["src", "tests"]
 }
