@@ -21,6 +21,7 @@ import * as passwordResetRepo from './password-reset.repository.js';
 import * as sessionRepo from '../session/session.repository.js';
 import { emailService } from '../email/email.service.js';
 import * as emailVerificationRepo from './email-verify.repository.js';
+import * as hash from '../../shared/helpers/hash.helper.js';
 
 /* ======================================
    REGISTER
@@ -32,7 +33,7 @@ export const registerUserService = async (input: RegisterInput): Promise<UserDTO
     throw new AppError(409, 'User already Exist.');
   }
 
-  const hashpassword = await bcrypt.hash(input.password, 10);
+  const hashpassword = await hash.bcryptHash(input.password);
 
   const user = await authRepo.createUser({
     name: input.name,
@@ -46,7 +47,7 @@ export const registerUserService = async (input: RegisterInput): Promise<UserDTO
   }
 
   const token = crypto.randomBytes(32).toString('hex');
-  const token_hash = crypto.createHash('sha256').update(token).digest('hex');
+  const token_hash = hash.sha256Hash(token);
 
   await emailVerificationRepo.create(user.user_id, token_hash);
 
@@ -72,9 +73,9 @@ export const loginUserService = async (
   if (!user.email_verified) {
     throw new AppError(403, 'Please verify your email first');
   }
-  if (!user.password) throw new AppError(404, 'Invalid email or password');
 
-  const passMatch = await bcrypt.compare(input.password, user.password);
+  if (!user.password) throw new AppError(404, 'Invalid email or password');
+  const passMatch = await hash.compareBcryptHash(input.password, user.password);
   if (!passMatch) throw new AppError(400, 'Invalid email or password');
 
   const userDTO = toUserDTO(user);
@@ -92,7 +93,7 @@ export const forgotPasswordService = async (input: ForgotPasswordInput) => {
   if (!user) return;
 
   const rawToken = crypto.randomBytes(32).toString('hex');
-  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const tokenHash = hash.sha256Hash(rawToken);
   await passwordResetRepo.create(user.user_id, tokenHash);
 
   //email sent function need
@@ -101,8 +102,11 @@ export const forgotPasswordService = async (input: ForgotPasswordInput) => {
   await emailService.sendPasswordResetMail(input.email, resetLink);
 };
 
+/* ======================================
+   RESET PASSOWORD
+====================================== */
 export const resetPasswordService = async (input: ResetPasswordInput) => {
-  const tokenHash = crypto.createHash('sha256').update(input.token).digest('hex');
+  const tokenHash = hash.sha256Hash(input.token);
 
   const record = await passwordResetRepo.findByHashToken(tokenHash);
   if (!record)
@@ -119,8 +123,11 @@ export const resetPasswordService = async (input: ResetPasswordInput) => {
   await sessionRepo.deleteAllSessionsByUser(record.user_id);
 };
 
+/* ======================================
+   EMAIL VERIFY
+====================================== */
 export const emailVerifyService = async (input: EmailVerifyInput) => {
-  const token_hash = crypto.createHash('sha256').update(input.token).digest('hex');
+  const token_hash = hash.sha256Hash(input.token);
   const record = await emailVerificationRepo.findByHashToken(token_hash);
 
   if (!record) throw new AppError(401, 'Your link is got Expired or Invalid.  Please request a new one to continue.');
@@ -128,7 +135,9 @@ export const emailVerifyService = async (input: EmailVerifyInput) => {
 
   await emailVerificationRepo.deleteToken(token_hash);
 };
-
+/* ======================================
+   RESEND EMAIL FOR VERIFICATION
+====================================== */
 export const resentEmailVerification = async (input: ResentEmailVerifySchema) => {
   const user = await authRepo.findUserByEmail(input.email);
 
@@ -138,7 +147,7 @@ export const resentEmailVerification = async (input: ResentEmailVerifySchema) =>
   await emailVerificationRepo.deleteTokenByUserId(user.user_id);
 
   const token = crypto.randomBytes(32).toString('hex');
-  const token_hash = crypto.createHash('sha256').update(token).digest('hex');
+  const token_hash = hash.sha256Hash(token);
 
   await emailVerificationRepo.create(user.user_id, token_hash);
 

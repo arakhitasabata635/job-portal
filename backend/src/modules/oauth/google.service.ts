@@ -9,6 +9,9 @@ import { toUserDTO } from '../auth/auth.mapper.js';
 import * as sessionService from '../session/session.service.js';
 import { verifyGoogleToken } from './providers/google.provider.js';
 
+/* ======================================
+   GOOGLE CALLBACK FUNCTION
+====================================== */
 export const googleCallbackService = async (
   codeVerifier: string,
   code: string,
@@ -24,7 +27,9 @@ export const googleCallbackService = async (
   const { accessToken, refreshToken } = await sessionService.createSessionForUser(userDTO, deviceInfo, ipAddress);
   return { userDTO, accessToken, refreshToken };
 };
-
+/* ======================================
+   CREATE GOOGLE USER
+====================================== */
 const findOrCreateUserFromGoogle = async (payload: TokenPayload): Promise<UserEntity> => {
   // check token got payload
   const { sub, email, email_verified, name } = payload;

@@ -6,9 +6,13 @@ import { RefreshTokenResponse } from './session.type.js';
 
 import * as authRepo from '../auth/auth.repository.js';
 import * as sessionRepo from './session.repository.js';
+import * as hash from '../../shared/helpers/hash.helper.js';
 import { UserDTO } from '../auth/auth.types.js';
 import crypto from 'crypto';
 
+/* ======================================
+   SESSION CREATION
+====================================== */
 export const createSessionForUser = async (
   userDTO: UserDTO,
   deviceInfo: string,
@@ -17,7 +21,7 @@ export const createSessionForUser = async (
   const sessionId = crypto.randomUUID(); // create rendom session id
   const { accessToken, refreshToken } = generateSessionTokens(userDTO.userId, userDTO.role, sessionId);
   // hash token and update db
-  const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  const tokenHash = hash.sha256Hash(refreshToken);
   await sessionRepo.createSession({
     sessionId,
     userId: userDTO.userId,
@@ -29,14 +33,25 @@ export const createSessionForUser = async (
   return { accessToken, refreshToken };
 };
 
+/* ======================================
+   REFRESH SESSION 
+====================================== */
 export const refreshSessionService = async (oldRefreshToken: string): Promise<RefreshTokenResponse> => {
   //only validate secreate key not expiry
   const decoded = verifyRefreshToken(oldRefreshToken);
 
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
-  // session not in db means reuse token
+  // session not in db means reuse token. it detect the expire tokens stollen
   if (!session) {
+    await sessionRepo.deleteAllSessionsByUser(decoded.userId);
+    throw new AppError(401, 'Session reuse detected. Login again.');
+  }
+
+  const hashToken = hash.sha256Hash(oldRefreshToken);
+
+  // heandle the active session reuse detaction
+  if (hashToken !== session.token_hash) {
     await sessionRepo.deleteAllSessionsByUser(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
@@ -45,14 +60,6 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
   if (decoded.exp! * 1000 < Date.now()) {
     await sessionRepo.deleteSessionById(session.session_id);
     throw new AppError(401, 'Refresh token expired');
-  }
-
-  const hashToken = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
-
-  // heandle the active session reuse detaction
-  if (hashToken !== session.token_hash) {
-    await sessionRepo.deleteAllSessionsByUser(decoded.userId);
-    throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
   //FIND  role
@@ -67,7 +74,9 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
 
   return { accessToken, refreshToken };
 };
-
+/* ======================================
+   LOGOUT SINGLE
+====================================== */
 export const singleLogoutService = async (refreshToken: string) => {
   const decoded = verifyRefreshToken(refreshToken);
 
@@ -79,7 +88,9 @@ export const singleLogoutService = async (refreshToken: string) => {
   return await sessionRepo.deleteSessionById(decoded.sessionId);
 };
 
-// all session delete using accessToken
+/* ======================================
+   ALL LOGOUT
+====================================== */
 
 export const allLogoutService = async (token: string) => {
   const decoded = verifyAccessToken(token);
