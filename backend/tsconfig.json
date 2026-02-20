@@ -36,5 +36,5 @@
     // ⚡ Skips type checking inside node_modules for faster builds
     "skipLibCheck": true
   },
-  "include": ["src", "tests"]
+  "include": ["src", "tests", "jest.config.ts"]
 }
