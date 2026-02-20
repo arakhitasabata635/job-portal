@@ -1,4 +1,3 @@
-import bcrypt from 'bcrypt';
 import { AppError } from '../../shared/errors/appError.js';
 
 import { generateSessionTokens, verifyAccessToken, verifyRefreshToken } from './auth.token.js';
@@ -9,6 +8,7 @@ import * as sessionRepo from './session.repository.js';
 import * as hash from '../../shared/helpers/hash.helper.js';
 import { UserDTO } from '../auth/auth.types.js';
 import crypto from 'crypto';
+import * as sessionUtils from './session.utils.js';
 
 /* ======================================
    SESSION CREATION
@@ -42,23 +42,17 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
 
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
-  // session not in db means reuse token. it detect the expire tokens stollen
-  if (!session) {
-    await sessionRepo.deleteAllSessionsByUser(decoded.userId);
-    throw new AppError(401, 'Session reuse detected. Login again.');
-  }
-
-  const hashToken = hash.sha256Hash(oldRefreshToken);
-
-  // heandle the active session reuse detaction
-  if (hashToken !== session.token_hash) {
+  //check session reuse
+  try {
+    sessionUtils.isSessionReuse(session, oldRefreshToken);
+  } catch {
     await sessionRepo.deleteAllSessionsByUser(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
   // check the expiry of the token
-  if (decoded.exp! * 1000 < Date.now()) {
-    await sessionRepo.deleteSessionById(session.session_id);
+  if (sessionUtils.isTokenExp(decoded.exp!)) {
+    await sessionRepo.deleteSessionById(session!.session_id);
     throw new AppError(401, 'Refresh token expired');
   }
 
@@ -70,7 +64,7 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
   const { accessToken, refreshToken } = generateSessionTokens(user.user_id, user.role, decoded.sessionId);
   // hash token and update db
   const hashRefresh = crypto.createHash('sha256').update(refreshToken).digest('hex');
-  await sessionRepo.updateSessionToken(session.session_id, hashRefresh);
+  await sessionRepo.updateSessionToken(session!.session_id, hashRefresh);
 
   return { accessToken, refreshToken };
 };
