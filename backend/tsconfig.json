@@ -5,6 +5,10 @@
 
     // 📦 Where compiled JavaScript files will be generated
     "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
 
     // 📤 Controls how import/export works in Node.js (ESM + CommonJS support)
     "module": "NodeNext",
