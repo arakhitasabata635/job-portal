@@ -3,10 +3,10 @@ import { UserDTO } from '@/modules/auth/auth.types.js';
 import { setupSessionTest } from './session.test.setup.js';
 
 describe('session service', () => {
-  let setup: Awaited<ReturnType<typeof setupSessionTest>>;
+  let sessionCtx: Awaited<ReturnType<typeof setupSessionTest>>; // ctx means context:- The full environment or setup required to run something.
 
   beforeAll(async () => {
-    setup = await setupSessionTest();
+    sessionCtx = await setupSessionTest();
   });
 
   /* ========================================================== */
@@ -38,25 +38,25 @@ describe('session service', () => {
       const mockRefresh = 'refresh-token';
       const mockHash = 'hashed-refresh-token';
 
-      setup.sessionToken.generateSessionTokens.mockReturnValue({
+      sessionCtx.sessionToken.generateSessionTokens.mockReturnValue({
         accessToken: mockAccess,
         refreshToken: mockRefresh,
       });
-      setup.hash.sha256Hash.mockReturnValue(mockHash);
-      setup.sessionRepo.createSession.mockResolvedValue(undefined);
+      sessionCtx.hash.sha256Hash.mockReturnValue(mockHash);
+      sessionCtx.sessionRepo.createSession.mockResolvedValue(undefined);
 
       /* act */
-      const result = await setup.sessionService.createSessionForUser(mockUserDTO, mockDeviceInfo, mockIp);
+      const result = await sessionCtx.sessionService.createSessionForUser(mockUserDTO, mockDeviceInfo, mockIp);
 
       /* Assertions */
-      expect(setup.sessionToken.generateSessionTokens).toHaveBeenCalledTimes(1);
-      expect(setup.sessionToken.generateSessionTokens).toHaveBeenCalledWith(
+      expect(sessionCtx.sessionToken.generateSessionTokens).toHaveBeenCalledTimes(1);
+      expect(sessionCtx.sessionToken.generateSessionTokens).toHaveBeenCalledWith(
         mockUserDTO.userId,
         mockUserDTO.role,
         expect.any(String),
       );
-      expect(setup.hash.sha256Hash).toHaveBeenCalledWith(mockRefresh);
-      expect(setup.sessionRepo.createSession).toHaveBeenCalledWith({
+      expect(sessionCtx.hash.sha256Hash).toHaveBeenCalledWith(mockRefresh);
+      expect(sessionCtx.sessionRepo.createSession).toHaveBeenCalledWith({
         sessionId: expect.any(String),
         userId: mockUserDTO.userId,
         tokenHash: mockHash,
@@ -67,6 +67,53 @@ describe('session service', () => {
         accessToken: mockAccess,
         refreshToken: mockRefresh,
       });
+    });
+    /* ---------------------------------------------------------- */
+    /* ❌ TOKEN GENERATION FAILURE */
+    /* ---------------------------------------------------------- */
+    it('should throw if sessionRepo.createSession fails', async () => {
+      sessionCtx.sessionToken.generateSessionTokens.mockReturnValue({
+        accessToken: 'a',
+        refreshToken: 'r',
+      });
+      sessionCtx.hash.sha256Hash.mockReturnValue('hash-r');
+      sessionCtx.sessionRepo.createSession.mockImplementation(() => {
+        throw new Error('DB Error');
+      });
+      await expect(sessionCtx.sessionService.createSessionForUser(mockUserDTO, mockDeviceInfo, mockIp)).rejects.toThrow(
+        'DB Error',
+      );
+      expect(sessionCtx.sessionRepo.createSession).toHaveBeenCalledTimes(1);
+    });
+    /* ---------------------------------------------------------- */
+    /* ❌ TOKEN GENERATION FAILURE */
+    /* ---------------------------------------------------------- */
+    it('should throw if generateSessionTokens fails', async () => {
+      sessionCtx.sessionToken.generateSessionTokens.mockImplementation(() => {
+        throw new Error('JWT Error');
+      });
+      await expect(sessionCtx.sessionService.createSessionForUser(mockUserDTO, mockDeviceInfo, mockIp)).rejects.toThrow(
+        'JWT Error',
+      );
+      expect(sessionCtx.sessionRepo.createSession).not.toHaveBeenCalled();
+    });
+
+    /* ---------------------------------------------------------- */
+    /* ❌ HASH FAILURE */
+    /* ---------------------------------------------------------- */
+    it('should throw if hashing fails', async () => {
+      sessionCtx.sessionToken.generateSessionTokens.mockReturnValue({
+        accessToken: 'a',
+        refreshToken: 'r',
+      });
+      sessionCtx.hash.sha256Hash.mockImplementation(() => {
+        throw new Error('Hash Fail');
+      });
+
+      await expect(sessionCtx.sessionService.createSessionForUser(mockUserDTO, mockDeviceInfo, mockIp)).rejects.toThrow(
+        'Hash Fail',
+      );
+      expect(sessionCtx.sessionRepo.createSession).not.toHaveBeenCalled();
     });
   });
 });
