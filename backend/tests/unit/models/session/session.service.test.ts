@@ -115,5 +115,45 @@ describe('session service', () => {
       );
       expect(sessionCtx.sessionRepo.createSession).not.toHaveBeenCalled();
     });
+
+    /* ---------------------------------------------------------- */
+    /* ✅ NULL IP CASE */
+    /* ---------------------------------------------------------- */
+    it('should allow null ipAddress', async () => {
+      sessionCtx.sessionToken.generateSessionTokens.mockReturnValue({
+        accessToken: 'a',
+        refreshToken: 'r',
+      });
+      sessionCtx.hash.sha256Hash.mockReturnValue('hash-r');
+      sessionCtx.sessionRepo.createSession.mockResolvedValue(undefined);
+
+      await sessionCtx.sessionService.createSessionForUser(mockUserDTO, mockDeviceInfo, null);
+
+      expect(sessionCtx.sessionRepo.createSession).toHaveBeenCalledWith(expect.objectContaining({ ipAddress: null }));
+    });
+  });
+
+  /* ========================================================== */
+  /* refreshSessionService */
+  /* ========================================================== */
+  describe('refreshSessionService', () => {
+    const oldRefreshToken = 'old-refresh-token';
+    const hashRefresh = 'hash-token';
+    const mockDecoded = {
+      userId: 'user-1',
+      sessionId: 'session-123',
+    };
+    const mockSession = {
+      sessionId: 'session-1',
+      userId: 'user-1',
+      tokenHash: 'oldHash',
+    };
+    const mockUser = {
+      userId: 'user-1',
+      role: 'jobseeker',
+    };
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
   });
 });

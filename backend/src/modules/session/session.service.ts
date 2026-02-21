@@ -63,7 +63,7 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
 
   const { accessToken, refreshToken } = sessionToken.generateSessionTokens(user.user_id, user.role, decoded.sessionId);
   // hash token and update db
-  const hashRefresh = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  const hashRefresh = hash.sha256Hash(refreshToken);
   await sessionRepo.updateSessionToken(session!.session_id, hashRefresh);
 
   return { accessToken, refreshToken };
