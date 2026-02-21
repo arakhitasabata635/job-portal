@@ -7,6 +7,8 @@ export async function setupSessionTest() {
     createSession: jest.fn(),
     deleteSession: jest.fn(),
     findSession: jest.fn(),
+    findSessionBySessionId: jest.fn(),
+    updateSessionToken: jest.fn(),
   }));
 
   jest.unstable_mockModule('@/shared/helpers/hash.helper.js', () => ({
