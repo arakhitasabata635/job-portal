@@ -7,7 +7,12 @@ const config: Config = {
   extensionsToTreatAsEsm: ['.ts'],
 
   moduleNameMapper: {
+    // Map ESM .js imports using @ alias to actual .ts source files
+    '^@/(.*)\\.js$': '<rootDir>/src/$1.ts',
+    // Map @ alias to src folder (for non .js imports)
     '^@/(.*)$': '<rootDir>/src/$1',
+
+    // Remove .js extension from relative imports so ts-jest can resolve .ts files
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 

@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { UserDTO } from '@/modules/auth/auth.types.js';
 import { setupSessionTest } from './session.test.setup.js';
 
