@@ -24,9 +24,9 @@ export async function setupSessionTest() {
   const sessionService = await import('@/modules/session/session.service.js');
 
   return {
-    sessionRepo,
-    hash,
-    sessionToken,
+    sessionRepo: sessionRepo as jest.Mocked<typeof sessionRepo>,
+    hash: hash as jest.Mocked<typeof hash>,
+    sessionToken: sessionToken as jest.Mocked<typeof sessionToken>,
     sessionService,
   };
 }
