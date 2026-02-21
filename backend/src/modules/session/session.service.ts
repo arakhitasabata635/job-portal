@@ -1,6 +1,6 @@
 import { AppError } from '../../shared/errors/appError.js';
 
-import { generateSessionTokens, verifyAccessToken, verifyRefreshToken } from './auth.token.js';
+import * as sessionToken from './auth.token.js';
 import { RefreshTokenResponse } from './session.type.js';
 
 import * as authRepo from '../auth/auth.repository.js';
@@ -19,7 +19,7 @@ export const createSessionForUser = async (
   ipAddress: string | null,
 ): Promise<RefreshTokenResponse> => {
   const sessionId = crypto.randomUUID(); // create rendom session id
-  const { accessToken, refreshToken } = generateSessionTokens(userDTO.userId, userDTO.role, sessionId);
+  const { accessToken, refreshToken } = sessionToken.generateSessionTokens(userDTO.userId, userDTO.role, sessionId);
   // hash token and update db
   const tokenHash = hash.sha256Hash(refreshToken);
   await sessionRepo.createSession({
@@ -38,7 +38,7 @@ export const createSessionForUser = async (
 ====================================== */
 export const refreshSessionService = async (oldRefreshToken: string): Promise<RefreshTokenResponse> => {
   //only validate secreate key not expiry
-  const decoded = verifyRefreshToken(oldRefreshToken);
+  const decoded = sessionToken.verifyRefreshToken(oldRefreshToken);
 
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
@@ -61,7 +61,7 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
   if (!user) throw new AppError(404, 'User no longer exist');
   //create tokens
 
-  const { accessToken, refreshToken } = generateSessionTokens(user.user_id, user.role, decoded.sessionId);
+  const { accessToken, refreshToken } = sessionToken.generateSessionTokens(user.user_id, user.role, decoded.sessionId);
   // hash token and update db
   const hashRefresh = crypto.createHash('sha256').update(refreshToken).digest('hex');
   await sessionRepo.updateSessionToken(session!.session_id, hashRefresh);
@@ -72,7 +72,7 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
    LOGOUT SINGLE
 ====================================== */
 export const singleLogoutService = async (refreshToken: string) => {
-  const decoded = verifyRefreshToken(refreshToken);
+  const decoded = sessionToken.verifyRefreshToken(refreshToken);
 
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);
 
@@ -87,6 +87,6 @@ export const singleLogoutService = async (refreshToken: string) => {
 ====================================== */
 
 export const allLogoutService = async (token: string) => {
-  const decoded = verifyAccessToken(token);
+  const decoded = sessionToken.verifyAccessToken(token);
   return await sessionRepo.deleteAllSessionsByUser(decoded.userId);
 };
