@@ -20,7 +20,7 @@ export async function setupSessionTest() {
     verifyRefreshToken: jest.fn(),
   }));
   jest.unstable_mockModule('@/modules/auth/auth.repository.js', () => ({
-    findUserByid: jest.fn(),
+    findUserRoleById: jest.fn(),
   }));
   jest.unstable_mockModule('@/modules/session/session.utils.js', () => ({
     isSessionReuse: jest.fn(),

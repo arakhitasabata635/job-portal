@@ -148,21 +148,8 @@ describe('session service', () => {
       created_at: new Date(),
       expires_at: new Date(),
     };
-    const mockUser: UserEntity = {
-      user_id: 'user-1',
-      name: '',
-      email: '',
-      password: '',
-      email_verified: true,
-      phone_number: '',
+    const mockUser = {
       role: UserRole.JOBSEEKER,
-      bio: '',
-      resume: '',
-      resume_public_id: '',
-      profile_pic: '',
-      profile_pic_public_id: '',
-      created_at: new Date(),
-      subscription: new Date(),
     };
     beforeEach(() => {
       jest.clearAllMocks();
@@ -176,7 +163,7 @@ describe('session service', () => {
       sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
       sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {});
       sessionCtx.sessionUtils.isSessionExp.mockReturnValue(false);
-      sessionCtx.authRepo.findUserByid.mockResolvedValue(mockUser);
+      sessionCtx.authRepo.findUserRoleById.mockResolvedValue(mockUser);
       sessionCtx.sessionToken.generateSessionTokens.mockReturnValue({
         accessToken: 'new-acces',
         refreshToken: 'new-refresh',
@@ -248,7 +235,7 @@ describe('session service', () => {
       sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {});
       sessionCtx.sessionUtils.isSessionExp.mockReturnValue(false);
 
-      sessionCtx.authRepo.findUserByid.mockResolvedValue(null);
+      sessionCtx.authRepo.findUserRoleById.mockResolvedValue(null);
       await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow(
         'User no longer exist',
       );

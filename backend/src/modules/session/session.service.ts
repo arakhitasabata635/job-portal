@@ -57,11 +57,15 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
   }
 
   //FIND  role
-  const user = await authRepo.findUserByid(decoded.userId);
+  const user = await authRepo.findUserRoleById(decoded.userId);
   if (!user) throw new AppError(404, 'User no longer exist');
   //create tokens
 
-  const { accessToken, refreshToken } = sessionToken.generateSessionTokens(user.user_id, user.role, decoded.sessionId);
+  const { accessToken, refreshToken } = sessionToken.generateSessionTokens(
+    session!.user_id,
+    user.role,
+    decoded.sessionId,
+  );
   // hash token and update db
   const hashRefresh = hash.sha256Hash(refreshToken);
   await sessionRepo.updateSessionToken(session!.session_id, hashRefresh);

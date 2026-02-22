@@ -26,6 +26,16 @@ SELECT * FROM users WHERE user_id = ${userId}
   return findUser;
 };
 
+export const findUserRoleById = async (userId: string): Promise<Pick<UserEntity, 'role'> | null> => {
+  const [user] = await sql`
+SELECT * FROM users WHERE user_id = ${userId}
+`;
+
+  if (!user) return null;
+  const role = user.role;
+  return role;
+};
+
 // create user
 interface CreateUserInput {
   name: string;
