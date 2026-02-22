@@ -53,7 +53,7 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
   // check the expiry of the token
   if (sessionUtils.isTokenExp(decoded.exp!)) {
     await sessionRepo.deleteSessionById(session!.session_id);
-    throw new AppError(401, 'Refresh token expired');
+    throw new AppError(401, 'Session got expire. Login again.');
   }
 
   //FIND  role

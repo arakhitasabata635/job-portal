@@ -196,5 +196,67 @@ describe('session service', () => {
       });
       expect(sessionCtx.sessionRepo.updateSessionToken).toHaveBeenCalledWith('session-1', 'new-refresh-hash');
     });
+    /* ========================================================= */
+    /* ❌ TOKEN VERIFY FAIL */
+    /* ========================================================= */
+    it('should throw if token verification fails', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockImplementation(() => {
+        throw new Error('Invalid-Token');
+      });
+      sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
+
+      await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow('Invalid-Token');
+
+      expect(sessionCtx.sessionRepo.findSessionBySessionId).not.toHaveBeenCalled();
+      expect(sessionCtx.sessionRepo.updateSessionToken).not.toHaveBeenCalled();
+    });
+    /* ========================================================= */
+    /* ❌ SESSION REUSE DETECTED */
+    /* ========================================================= */
+    it('should delete all session if reuse detected', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
+      sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
+      sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {
+        throw new Error('Session reuse detected');
+      });
+
+      await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow(
+        'Session reuse detected. Login again.',
+      );
+      expect(sessionCtx.sessionRepo.deleteAllSessionsByUser).toHaveBeenCalledTimes(1);
+      expect(sessionCtx.sessionRepo.deleteAllSessionsByUser).toHaveBeenLastCalledWith(mockDecoded.userId);
+      expect(sessionCtx.sessionRepo.updateSessionToken).not.toHaveBeenCalled();
+    });
+    /* ========================================================= */
+    /* ❌ REFRESH TOKEN EXPIRED */
+    /* ========================================================= */
+    it('should return token expire relogin', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
+      sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
+      sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {});
+
+      sessionCtx.sessionUtils.isTokenExp.mockReturnValue(true);
+
+      await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow(
+        'Session got expire. Login again.',
+      );
+      expect(sessionCtx.sessionRepo.deleteSessionById).toHaveBeenCalledTimes(1);
+      expect(sessionCtx.sessionRepo.updateSessionToken).not.toHaveBeenCalled();
+    });
+    /* ========================================================= */
+    /* ❌ USER NOT FOUND */
+    /* ========================================================= */
+    it('should throw user no longer exist ', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
+      sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
+      sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {});
+      sessionCtx.sessionUtils.isTokenExp.mockReturnValue(false);
+
+      sessionCtx.authRepo.findUserByid.mockResolvedValue(null);
+      await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow(
+        'User no longer exist',
+      );
+      expect(sessionCtx.sessionRepo.updateSessionToken).not.toHaveBeenCalled();
+    });
   });
 });
