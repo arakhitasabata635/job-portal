@@ -1,1 +1,4 @@
-export type UserRole = 'jobseeker' | 'recruiter';
+export enum UserRole {
+  JOBSEEKER = 'jobseeker',
+  RECRUITER = 'recruiter',
+}

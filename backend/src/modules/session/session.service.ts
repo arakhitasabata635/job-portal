@@ -14,7 +14,7 @@ import * as sessionUtils from './session.utils.js';
    SESSION CREATION
 ====================================== */
 export const createSessionForUser = async (
-  userDTO: UserDTO,
+  userDTO: Pick<UserDTO, 'userId' | 'role'>,
   deviceInfo: string,
   ipAddress: string | null,
 ): Promise<RefreshTokenResponse> => {

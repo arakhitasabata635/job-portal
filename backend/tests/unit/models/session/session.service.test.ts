@@ -1,7 +1,8 @@
 import { jest } from '@jest/globals';
-import { UserDTO, UserEntity } from '@/modules/auth/auth.types.js';
+import { UserEntity } from '@/modules/auth/auth.types.js';
 import { setupSessionTest } from './session.test.setup.js';
 import { SessionEntity } from '@/modules/session/session.type.js';
+import { UserRole } from '@/types/role.js';
 
 describe('session service', () => {
   let sessionCtx: Awaited<ReturnType<typeof setupSessionTest>>; // ctx means context:- The full environment or setup required to run something.
@@ -14,14 +15,9 @@ describe('session service', () => {
   /* createSessionForUser */
   /* ========================================================== */
   describe('create session for user', () => {
-    const mockUserDTO: UserDTO = {
+    const mockUserDTO = {
       userId: 'user-123',
-      name: 'John',
-      email: 'john@test.com',
-      isEmailVerify: true,
-      phoneNumber: '9012785564',
-      role: 'jobseeker',
-      createdAt: new Date(),
+      role: UserRole.JOBSEEKER,
     };
     const mockDeviceInfo = 'Chrome-Windows';
     const mockIp = '192.168.1.1';
@@ -159,7 +155,7 @@ describe('session service', () => {
       password: '',
       email_verified: true,
       phone_number: '',
-      role: 'jobseeker',
+      role: UserRole.JOBSEEKER,
       bio: '',
       resume: '',
       resume_public_id: '',
