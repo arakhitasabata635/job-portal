@@ -24,7 +24,7 @@ export async function setupSessionTest() {
   }));
   jest.unstable_mockModule('@/modules/session/session.utils.js', () => ({
     isSessionReuse: jest.fn(),
-    isTokenExp: jest.fn(),
+    isSessionExp: jest.fn(),
   }));
 
   const sessionRepo = await import('@/modules/session/session.repository.js');

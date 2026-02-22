@@ -175,7 +175,7 @@ describe('session service', () => {
       sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
       sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
       sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {});
-      sessionCtx.sessionUtils.isTokenExp.mockReturnValue(false);
+      sessionCtx.sessionUtils.isSessionExp.mockReturnValue(false);
       sessionCtx.authRepo.findUserByid.mockResolvedValue(mockUser);
       sessionCtx.sessionToken.generateSessionTokens.mockReturnValue({
         accessToken: 'new-acces',
@@ -231,7 +231,7 @@ describe('session service', () => {
       sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
       sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {});
 
-      sessionCtx.sessionUtils.isTokenExp.mockReturnValue(true);
+      sessionCtx.sessionUtils.isSessionExp.mockReturnValue(true);
 
       await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow(
         'Session got expire. Login again.',
@@ -246,7 +246,7 @@ describe('session service', () => {
       sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
       sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
       sessionCtx.sessionUtils.isSessionReuse.mockImplementation(() => {});
-      sessionCtx.sessionUtils.isTokenExp.mockReturnValue(false);
+      sessionCtx.sessionUtils.isSessionExp.mockReturnValue(false);
 
       sessionCtx.authRepo.findUserByid.mockResolvedValue(null);
       await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow(
