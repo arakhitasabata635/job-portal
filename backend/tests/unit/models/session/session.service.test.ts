@@ -133,21 +133,21 @@ describe('session service', () => {
   /* ========================================================== */
   /* refreshSessionService */
   /* ========================================================== */
+  const mockSession: SessionEntity = {
+    session_id: 'session-1',
+    user_id: 'user-1',
+    token_hash: 'oldHash',
+    device_info: 'device-1',
+    ip_address: '127.0.0.0',
+    created_at: new Date(),
+    expires_at: new Date(),
+  };
+  const mockDecoded = {
+    userId: 'user-1',
+    sessionId: 'session-123',
+  };
   describe('refreshSessionService', () => {
     const oldRefreshToken = 'old-refresh-token';
-    const mockDecoded = {
-      userId: 'user-1',
-      sessionId: 'session-123',
-    };
-    const mockSession: SessionEntity = {
-      session_id: 'session-1',
-      user_id: 'user-1',
-      token_hash: 'oldHash',
-      device_info: 'device-1',
-      ip_address: '127.0.0.0',
-      created_at: new Date(),
-      expires_at: new Date(),
-    };
     const mockUser = {
       role: UserRole.JOBSEEKER,
     };
@@ -240,6 +240,74 @@ describe('session service', () => {
         'User no longer exist',
       );
       expect(sessionCtx.sessionRepo.updateSessionToken).not.toHaveBeenCalled();
+    });
+  });
+  /* ========================================================== */
+  /* singleLogoutService */
+  /* ========================================================== */
+  describe('single session logout', () => {
+    const mockRefreshToken = 'refresh-token';
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    /* ========================================================= */
+    /* ✅ SUCCESS CASE */
+    /* ========================================================= */
+    it('should logout the current session', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
+      sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
+      sessionCtx.sessionRepo.deleteSessionById.mockResolvedValue(undefined);
+
+      const result = await sessionCtx.sessionService.singleLogoutService(mockRefreshToken);
+
+      expect(sessionCtx.sessionToken.verifyRefreshToken).toHaveBeenCalledWith(mockRefreshToken);
+      expect(sessionCtx.sessionRepo.deleteSessionById).toHaveBeenCalledWith(mockDecoded.sessionId);
+      expect(sessionCtx.sessionRepo.findSessionBySessionId).toHaveBeenCalledWith(mockDecoded.sessionId);
+      expect(result).toBeUndefined();
+    });
+    /* ========================================================= */
+    /* ❌ TOKEN VERIFICATION FAIL */
+    /* ========================================================= */
+    it('should throw if token verification fail', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockImplementation(() => {
+        throw new Error('invelid-token');
+      });
+      await expect(sessionCtx.sessionService.singleLogoutService(mockRefreshToken)).rejects.toThrow('invelid-token');
+    });
+    /* ========================================================= */
+    /* ❌ SESSION NOT FOUND (ALREADY LOGOUT) */
+    /* ========================================================= */
+    it('should throw Already logout if session not found', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
+
+      sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(null);
+
+      await expect(sessionCtx.sessionService.singleLogoutService(mockRefreshToken)).rejects.toThrow('Already logout');
+
+      expect(sessionCtx.sessionRepo.deleteSessionById).not.toHaveBeenCalled();
+    });
+    /* ========================================================= */
+    /* ❌ DELETE SESSION FAIL */
+    /* ========================================================= */
+    it('should propagate deleteSession error', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
+      sessionCtx.sessionRepo.findSessionBySessionId.mockResolvedValue(mockSession);
+      sessionCtx.sessionRepo.deleteSessionById.mockRejectedValue(new Error('DB failure'));
+
+      await expect(sessionCtx.sessionService.singleLogoutService(mockRefreshToken)).rejects.toThrow('DB failure');
+    });
+    /* ========================================================= */
+    /* ❌ FIND SESSION FAIL */
+    /* ========================================================= */
+    it('should propagate findSession error', async () => {
+      sessionCtx.sessionToken.verifyRefreshToken.mockReturnValue(mockDecoded);
+
+      sessionCtx.sessionRepo.findSessionBySessionId.mockRejectedValue(new Error('DB read error'));
+
+      await expect(sessionCtx.sessionService.singleLogoutService(mockRefreshToken)).rejects.toThrow('DB read error');
+
+      expect(sessionCtx.sessionRepo.deleteSessionById).not.toHaveBeenCalled();
     });
   });
 });
