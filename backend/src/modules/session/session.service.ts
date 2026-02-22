@@ -46,7 +46,7 @@ export const refreshSessionService = async (oldRefreshToken: string): Promise<Re
   try {
     sessionUtils.isSessionReuse(session, oldRefreshToken);
   } catch {
-    await sessionRepo.deleteAllSessionsByUser(decoded.userId);
+    await sessionRepo.deleteAllSessionsByUserId(decoded.userId);
     throw new AppError(401, 'Session reuse detected. Login again.');
   }
 
@@ -92,5 +92,5 @@ export const singleLogoutService = async (refreshToken: string) => {
 
 export const allLogoutService = async (token: string) => {
   const decoded = sessionToken.verifyAccessToken(token);
-  return await sessionRepo.deleteAllSessionsByUser(decoded.userId);
+  return await sessionRepo.deleteAllSessionsByUserId(decoded.userId);
 };

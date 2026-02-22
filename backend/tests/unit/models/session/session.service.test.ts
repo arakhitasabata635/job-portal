@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import { UserEntity } from '@/modules/auth/auth.types.js';
 import { setupSessionTest } from './session.test.setup.js';
 import { SessionEntity } from '@/modules/session/session.type.js';
 import { UserRole } from '@/types/role.js';
@@ -206,8 +205,8 @@ describe('session service', () => {
       await expect(sessionCtx.sessionService.refreshSessionService(oldRefreshToken)).rejects.toThrow(
         'Session reuse detected. Login again.',
       );
-      expect(sessionCtx.sessionRepo.deleteAllSessionsByUser).toHaveBeenCalledTimes(1);
-      expect(sessionCtx.sessionRepo.deleteAllSessionsByUser).toHaveBeenLastCalledWith(mockDecoded.userId);
+      expect(sessionCtx.sessionRepo.deleteAllSessionsByUserId).toHaveBeenCalledTimes(1);
+      expect(sessionCtx.sessionRepo.deleteAllSessionsByUserId).toHaveBeenLastCalledWith(mockDecoded.userId);
       expect(sessionCtx.sessionRepo.updateSessionToken).not.toHaveBeenCalled();
     });
     /* ========================================================= */
@@ -308,6 +307,55 @@ describe('session service', () => {
       await expect(sessionCtx.sessionService.singleLogoutService(mockRefreshToken)).rejects.toThrow('DB read error');
 
       expect(sessionCtx.sessionRepo.deleteSessionById).not.toHaveBeenCalled();
+    });
+  });
+  /* ========================================================== */
+  /* allLogoutService */
+  /* ========================================================== */
+  describe('allLogoutService ', () => {
+    const mockAccessToken = 'access-token';
+    const mockaccessDecoded = {
+      userId: 'user-1',
+      role: UserRole.JOBSEEKER,
+    };
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+    /* ========================================================= */
+    /* ✅ SUCCESS CASE */
+    /* ========================================================= */
+    it('should delete all sessions for user successfully', async () => {
+      sessionCtx.sessionToken.verifyAccessToken.mockReturnValue(mockaccessDecoded);
+      sessionCtx.sessionRepo.deleteAllSessionsByUserId.mockResolvedValue(undefined);
+
+      const result = await sessionCtx.sessionService.allLogoutService(mockAccessToken);
+
+      expect(sessionCtx.sessionToken.verifyAccessToken).toHaveBeenCalledWith(mockAccessToken);
+      expect(sessionCtx.sessionRepo.deleteAllSessionsByUserId).toHaveBeenCalledWith(mockDecoded.userId);
+      expect(result).toBeUndefined();
+    });
+    /* ========================================================= */
+    /* ❌ TOKEN VERIFICATION FAIL */
+    /* ========================================================= */
+
+    it('should throw if access token verification fails', async () => {
+      sessionCtx.sessionToken.verifyAccessToken.mockImplementation(() => {
+        throw new Error('Invalid access token');
+      });
+
+      await expect(sessionCtx.sessionService.allLogoutService(mockAccessToken)).rejects.toThrow('Invalid access token');
+
+      expect(sessionCtx.sessionRepo.deleteAllSessionsByUserId).not.toHaveBeenCalled();
+    });
+    /* ========================================================= */
+    /* ❌ DELETE ALL SESSIONS FAIL */
+    /* ========================================================= */
+    it('should propagate error if deleteAllSessionsByUser fails', async () => {
+      sessionCtx.sessionToken.verifyAccessToken.mockReturnValue(mockaccessDecoded);
+
+      sessionCtx.sessionRepo.deleteAllSessionsByUserId.mockRejectedValue(new Error('DB failure'));
+
+      await expect(sessionCtx.sessionService.allLogoutService(mockAccessToken)).rejects.toThrow('DB failure');
     });
   });
 });

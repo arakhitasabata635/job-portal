@@ -43,7 +43,7 @@ export const deleteSessionById = async (sessionId: string) => {
   `;
 };
 
-export const deleteAllSessionsByUser = async (userId: string) => {
+export const deleteAllSessionsByUserId = async (userId: string) => {
   await sql`
     DELETE FROM refresh_tokens
     WHERE user_id = ${userId};

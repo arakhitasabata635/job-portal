@@ -8,7 +8,7 @@ export async function setupSessionTest() {
     findSessionBySessionId: jest.fn(),
     updateSessionToken: jest.fn(),
     deleteSessionById: jest.fn(),
-    deleteAllSessionsByUser: jest.fn(),
+    deleteAllSessionsByUserId: jest.fn(),
   }));
 
   jest.unstable_mockModule('@/shared/helpers/hash.helper.js', () => ({
@@ -18,6 +18,7 @@ export async function setupSessionTest() {
   jest.unstable_mockModule('@/modules/session/auth.token.js', () => ({
     generateSessionTokens: jest.fn(),
     verifyRefreshToken: jest.fn(),
+    verifyAccessToken: jest.fn(),
   }));
   jest.unstable_mockModule('@/modules/auth/auth.repository.js', () => ({
     findUserRoleById: jest.fn(),
