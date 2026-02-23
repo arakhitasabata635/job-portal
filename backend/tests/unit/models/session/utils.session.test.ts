@@ -16,8 +16,7 @@ async function setupUtilTest() {
     sessionUtils: sessionUtils as jest.Mocked<typeof sessionUtils>,
   };
 }
-
-describe('isSessionReuse', () => {
+describe('session Utils unit test', () => {
   let sessionUtilCtx: Awaited<ReturnType<typeof setupUtilTest>>;
   beforeAll(async () => {
     sessionUtilCtx = await setupUtilTest();
@@ -30,42 +29,75 @@ describe('isSessionReuse', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  /* ========================================================= */
-  /* ❌ SESSION IS NULL → REUSE DETECTED */
-  /* ========================================================= */
-  it('should throw session reuse detected no session available', () => {
-    expect(() => sessionUtilCtx.sessionUtils.isSessionReuse(null, oldRefreshToken)).toThrow('Session reuse detected.');
+  describe('isSessionReuse', () => {
+    /* ========================================================= */
+    /* ❌ SESSION IS NULL → REUSE DETECTED */
+    /* ========================================================= */
+    it('should throw session reuse detected no session available', () => {
+      expect(() => sessionUtilCtx.sessionUtils.isSessionReuse(null, oldRefreshToken)).toThrow(
+        'Session reuse detected.',
+      );
+    });
+    /* ========================================================= */
+    /* ❌ HASH MISMATCH → REUSE DETECTED */
+    /* ========================================================= */
+    it('should throw session reuse detect hash mismatch', () => {
+      sessionUtilCtx.hash.sha256Hash.mockReturnValue('different hash ');
+
+      expect(() => sessionUtilCtx.sessionUtils.isSessionReuse(mockSession, oldRefreshToken)).toThrow(
+        'Session reuse detected.',
+      );
+      expect(sessionUtilCtx.hash.sha256Hash).toHaveBeenCalledWith(oldRefreshToken);
+    });
+    /* ========================================================= */
+    /* ✅ HASH MATCH → NO ERROR */
+    /* ========================================================= */
+    it('should not throw if hash matches', () => {
+      sessionUtilCtx.hash.sha256Hash.mockReturnValue('oldHash');
+
+      expect(() => sessionUtilCtx.sessionUtils.isSessionReuse(mockSession, oldRefreshToken)).not.toThrow();
+
+      expect(sessionUtilCtx.hash.sha256Hash).toHaveBeenCalledWith(oldRefreshToken);
+    });
+    /* ========================================================= */
+    /* 🔒 ENSURE HASH CALLED ONLY WHEN SESSION EXISTS */
+    /* ========================================================= */
+
+    it('should not call hash if session is null', () => {
+      try {
+        sessionUtilCtx.sessionUtils.isSessionReuse(null, oldRefreshToken);
+      } catch {}
+
+      expect(sessionUtilCtx.hash.sha256Hash).not.toHaveBeenCalled();
+    });
   });
-  /* ========================================================= */
-  /* ❌ HASH MISMATCH → REUSE DETECTED */
-  /* ========================================================= */
-  it('should throw session reuse detect hash mismatch', () => {
-    sessionUtilCtx.hash.sha256Hash.mockReturnValue('different hash ');
 
-    expect(() => sessionUtilCtx.sessionUtils.isSessionReuse(mockSession, oldRefreshToken)).toThrow(
-      'Session reuse detected.',
-    );
-    expect(sessionUtilCtx.hash.sha256Hash).toHaveBeenCalledWith(oldRefreshToken);
-  });
-  /* ========================================================= */
-  /* ✅ HASH MATCH → NO ERROR */
-  /* ========================================================= */
-  it('should not throw if hash matches', () => {
-    sessionUtilCtx.hash.sha256Hash.mockReturnValue('oldHash');
+  describe('isSessionExp - Unit Test', () => {
+    /* ========================================================= */
+    /* ✅ EXPIRED SESSION */
+    /* ========================================================= */
+    it('should return true if session is expired', () => {
+      const sessionExp = new Date(Date.now() - 1000);
+      const result = sessionUtilCtx.sessionUtils.isSessionExp(sessionExp);
+      expect(result).toBe(true);
+    });
+    /* ========================================================= */
+    /* ❌ NOT EXPIRED */
+    /* ========================================================= */
+    it('should return false if session not expire', () => {
+      const sessionExp = new Date(Date.now() + 10000);
+      const result = sessionUtilCtx.sessionUtils.isSessionExp(sessionExp);
+      expect(result).toBe(false);
+    });
+    /* ========================================================= */
+    /* ⚠️ EDGE CASE: EXACT CURRENT TIME */
+    /* ========================================================= */
+    it('should return false if expiry equals current time', () => {
+      const now = new Date();
 
-    expect(() => sessionUtilCtx.sessionUtils.isSessionReuse(mockSession, oldRefreshToken)).not.toThrow();
+      const result = sessionUtilCtx.sessionUtils.isSessionExp(now);
 
-    expect(sessionUtilCtx.hash.sha256Hash).toHaveBeenCalledWith(oldRefreshToken);
-  });
-  /* ========================================================= */
-  /* 🔒 ENSURE HASH CALLED ONLY WHEN SESSION EXISTS */
-  /* ========================================================= */
-
-  it('should not call hash if session is null', () => {
-    try {
-      sessionUtilCtx.sessionUtils.isSessionReuse(null, oldRefreshToken);
-    } catch {}
-
-    expect(sessionUtilCtx.hash.sha256Hash).not.toHaveBeenCalled();
+      expect(result).toBe(false);
+    });
   });
 });
