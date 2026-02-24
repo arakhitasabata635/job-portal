@@ -26,6 +26,14 @@ export const findSessionBySessionId = async (sessionId: string): Promise<Session
   if (!session) return null;
   return session as SessionEntity;
 };
+export const findSessionByuserId = async (userId: string): Promise<SessionEntity[] | null> => {
+  const [sessions] = await sql`
+  SELECT * FROM refresh_tokens
+  WHERE user_id = ${userId}
+  `;
+  if (!sessions) return null;
+  return sessions as SessionEntity[];
+};
 
 export const updateSessionToken = async (sessionId: string, newTokenHash: string) => {
   await sql`

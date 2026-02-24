@@ -61,5 +61,61 @@ describe('session service integration test', () => {
 
       expect(updateSession?.token_hash).not.toBe(hash.sha256Hash(refreshToken));
     });
+    /* ========================================================= */
+    /* ❌ NO COOKIE */
+    /* ========================================================= */
+
+    it('should fail if no refresh token provide', async () => {
+      const res = await request(app).post('/api/session/refresh');
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+    /* ========================================================= */
+    /* ❌ INVALID TOKEN */
+    /* ========================================================= */
+
+    it('should fail if refresh token is invalid', async () => {
+      refreshToken = 'wrong-token.hnnt.dsjjj';
+      const res = await request(app)
+        .post('/api/session/refresh')
+        .set('Cookie', [`${config.jwt.refresh_token.cookie_name} = ${refreshToken}`]);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+    /* ========================================================= */
+    /* ❌ SESSION NOT FOUND  REUSE DETECT*/
+    /* ========================================================= */
+    it('should fail if session does not exist', async () => {
+      await sessionRepo.deleteSessionById(sessionId);
+
+      const res = await request(app)
+        .post('/api/session/refresh')
+        .set('Cookie', [`${config.jwt.refresh_token.cookie_name} = ${refreshToken}`]);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+
+      const findsessions = await sessionRepo.findSessionByuserId(userId);
+      expect(findsessions).toBe(null);
+    });
+    /* ========================================================= */
+    /* ❌ OLD VALID TOKEN  FOUND  REUSE DETECT*/
+    /* ========================================================= */
+    it('should detect refresh token reuse and delete all sessions', async () => {
+      //generate  new token
+      const token = sessionToken.generateSessionTokens(userId, UserRole.JOBSEEKER, sessionId);
+
+      const res = await request(app)
+        .post('/api/session/refresh')
+        .set('Cookie', [`${config.jwt.refresh_token.cookie_name}=${token.refreshToken}`]);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+
+      const findsessions = await sessionRepo.findSessionByuserId(userId);
+      expect(findsessions).toBe(null);
+    });
   });
 });
