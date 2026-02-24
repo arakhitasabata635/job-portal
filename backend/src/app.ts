@@ -52,7 +52,8 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 app.use(globalErrorHandler);
-
-startNightCleanup(); //db cleanUp function
+if (config.node_env === 'production') {
+  startNightCleanup(); //db cleanUp function
+}
 
 export default app;

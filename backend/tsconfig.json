@@ -38,7 +38,9 @@
     "noUncheckedSideEffectImports": true,
 
     // ⚡ Skips type checking inside node_modules for faster builds
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    /* Disallows non-module files and 'const enums' to keep the codebase portable. */
+    "isolatedModules": true
   },
   "include": ["src", "tests", "jest.config.ts"]
 }
