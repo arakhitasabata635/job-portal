@@ -1,7 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config({
-  path: `.env.${process.env.NODE_ENV || 'development'}`,
-});
 import { config } from './config/env.js';
 import app from './app.js';
 import initDb from './config/init.js';
