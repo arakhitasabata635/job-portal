@@ -24,7 +24,7 @@ const config: Config = {
       },
     ],
   },
-
+  globalSetup: './tests/integration/setup.ts',
   clearMocks: true,
 };
 
