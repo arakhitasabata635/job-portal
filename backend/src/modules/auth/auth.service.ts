@@ -22,6 +22,7 @@ import * as sessionRepo from '../session/session.repository.js';
 import { emailService } from '../email/email.service.js';
 import * as emailVerificationRepo from './email-verify.repository.js';
 import * as hash from '../../shared/helpers/hash.helper.js';
+import { UserRole } from '@/types/role.js';
 
 /* ======================================
    REGISTER
@@ -40,7 +41,7 @@ export const registerUserService = async (input: RegisterInput): Promise<UserDTO
     email: input.email,
     password: hashpassword,
     phoneNumber: input.phoneNumber,
-    role: input.role,
+    role: input.role as UserRole,
   });
   if (!user) {
     throw new AppError(500, 'An unexpected error occurred. Please try again.');
@@ -120,7 +121,7 @@ export const resetPasswordService = async (input: ResetPasswordInput) => {
 
   await passwordResetRepo.markUsed(record.id);
 
-  await sessionRepo.deleteAllSessionsByUser(record.user_id);
+  await sessionRepo.deleteAllSessionsByUserId(record.user_id);
 };
 
 /* ======================================
