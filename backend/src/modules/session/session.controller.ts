@@ -7,7 +7,7 @@ import { allLogoutService, refreshSessionService, singleLogoutService } from './
 import * as cookie from '../../shared/helpers/cookie.helper.js';
 import { extractAccesToken } from '../../shared/helpers/extractHeader.js';
 
-export const rrefreshSessionController: Controller = async (req, res, next) => {
+export const refreshSessionController: Controller = async (req, res, next) => {
   const oldRefreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
 
   const { accessToken, refreshToken } = await refreshSessionService(oldRefreshToken);

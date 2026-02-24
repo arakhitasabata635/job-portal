@@ -15,9 +15,8 @@ describe('Auth Integration - Login', () => {
       users
     RESTART IDENTITY CASCADE
   `;
-    console.log('Integration tests completed');
   });
-  beforeEach(async () => {
+  afterEach(async () => {
     await sql`
     TRUNCATE TABLE
       email_verify_tokens,
