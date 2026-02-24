@@ -22,10 +22,13 @@ app.use(
 );
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
-app.use((req, res, next) => {
-  console.log('got the req', req.url);
-  next();
-});
+
+if (config.node_env === 'development') {
+  app.use((req, res, next) => {
+    console.log('got the req', req.url);
+    next();
+  });
+}
 
 // limit the attempts
 if (config.node_env === 'production') {

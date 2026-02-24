@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config({
   path: `.env.${process.env.NODE_ENV || 'development'}`,
+  quiet: true,
 });
 import { z } from 'zod';
 import * as jwt from 'jsonwebtoken';
