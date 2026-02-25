@@ -143,5 +143,42 @@ describe('session service integration test', () => {
 
       expect(session).toBe(null);
     });
+    /* ====================================== */
+    /*  ALREADY  LOGOUT */
+    /* ====================================== */
+    it('should return Already logout if session not found', async () => {
+      const token = sessionToken.generateSessionTokens(userId, UserRole.JOBSEEKER, crypto.randomUUID());
+      const res = await request(app)
+        .post('/api/session/logout')
+        .set('Cookie', [`${config.jwt.refresh_token.cookie_name} = ${token.refreshToken}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Already logout');
+    });
+    /* ====================================== */
+    /* NOT HAVE COOKIES */
+    /* ====================================== */
+    it('should fail if refresh token missing', async () => {
+      const res = await request(app).post('/api/session/logout');
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body.success).toBe(false);
+    });
+    /* ====================================== */
+    /*  INVALID TOKEN */
+    /* ====================================== */
+    it('should fail with invalid refresh token', async () => {
+      const res = await request(app)
+        .post('/api/session/logout')
+        .set('Cookie', `${config.jwt.refresh_token.cookie_name}=invalidtoken`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
   });
+  /* =====================================================
+      ALL LOGOUT
+  ===================================================== */
+  describe('POST/api/session/logout-all - integration test', () => {});
 });

@@ -18,12 +18,10 @@ interface AccessPayload {
 }
 
 const generateAccessToken = (data: AccessPayload) => {
-  data.randomString = crypto.randomUUID();
   return jwt.sign(data, accessSecreate, { expiresIn: config.jwt.access_token.expire });
 };
 
 const generateRefreshToken = (data: RefreshPayload) => {
-  data.randomString = crypto.randomUUID();
   return jwt.sign(data, refreshSecret, { expiresIn: config.jwt.refresh_token.expire });
 };
 
@@ -31,11 +29,13 @@ export const generateSessionTokens = (userId: string, role: UserRole, sessionId:
   const accessToken = generateAccessToken({
     userId: userId,
     role: role,
+    randomString: crypto.randomUUID(),
   });
 
   const refreshToken = generateRefreshToken({
     userId: userId,
     sessionId,
+    randomString: crypto.randomUUID(),
   });
   return { accessToken, refreshToken };
 };
