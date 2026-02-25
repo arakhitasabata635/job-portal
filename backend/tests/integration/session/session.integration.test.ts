@@ -12,7 +12,14 @@ describe('session service integration test', () => {
   let userId: string;
   let sessionId: string;
   let refreshToken: string;
-  beforeAll(async () => {
+  beforeEach(async () => {
+    // clear db
+    await sql`
+    TRUNCATE TABLE
+    refresh_tokens,
+    users
+    RESTART IDENTITY CASCADE`;
+    //create user
     const hashedPassword = await hash.bcryptHash('password');
     const user = await authRepo.createUser({
       name: 'arakhita',
@@ -27,6 +34,8 @@ describe('session service integration test', () => {
     const tokens = sessionToken.generateSessionTokens(userId, user?.role!, sessionId);
     refreshToken = tokens.refreshToken;
     const tokenHash = hash.sha256Hash(refreshToken);
+
+    //create session
     await sessionRepo.createSession({ sessionId, userId, tokenHash, deviceInfo: 'chrome', ipAddress: '17.0.0.0' });
   }, 30000);
   afterAll(async () => {
@@ -36,14 +45,10 @@ describe('session service integration test', () => {
     users
     RESTART IDENTITY CASCADE`;
   });
-  afterEach(async () => {
-    await sql`
-    TRUNCATE TABLE
-    refresh_tokens,
-    users
-    RESTART IDENTITY CASCADE`;
-  });
-  describe('refreshSessionService integration test', () => {
+  /* ====================================== */
+  /* REFRESH SESSION */
+  /* ====================================== */
+  describe('POST/api/session/refresh - integration test', () => {
     /* ========================================================= */
     /* ✅ SUCCESS */
     /* ========================================================= */
@@ -76,10 +81,10 @@ describe('session service integration test', () => {
     /* ========================================================= */
 
     it('should fail if refresh token is invalid', async () => {
-      refreshToken = 'wrong-token.hnnt.dsjjj';
+      const wrongToken = 'wrong-token.hnnt.dsjjj';
       const res = await request(app)
         .post('/api/session/refresh')
-        .set('Cookie', [`${config.jwt.refresh_token.cookie_name} = ${refreshToken}`]);
+        .set('Cookie', [`${config.jwt.refresh_token.cookie_name} = ${wrongToken}`]);
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -116,6 +121,27 @@ describe('session service integration test', () => {
 
       const findsessions = await sessionRepo.findSessionByuserId(userId);
       expect(findsessions).toBe(null);
+    });
+  });
+  /* ===================================================== */
+  /*  SINGLE LOGOUT */
+  /*===================================================== */
+  describe('POST/api/session/logout - integration test', () => {
+    /* ====================================== */
+    /*  SUCCESSFULLY LOGOUT */
+    /* ====================================== */
+    it('should successfully logout the session', async () => {
+      const res = await request(app)
+        .post('/api/session/logout')
+        .set('Cookie', [`${config.jwt.refresh_token.cookie_name} = ${refreshToken}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toBe('Logout succefully');
+
+      const session = await sessionRepo.findSessionBySessionId(sessionId);
+
+      expect(session).toBe(null);
     });
   });
 });
