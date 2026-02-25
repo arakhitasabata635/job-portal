@@ -38,7 +38,6 @@ export const createSessionForUser = async (
 ====================================== */
 export const refreshSessionService = async (oldRefreshToken: string): Promise<RefreshTokenResponse> => {
   //only validate secreate key not expiry
-  console.log('oldtokenresive ', oldRefreshToken);
   const decoded = sessionToken.verifyRefreshToken(oldRefreshToken);
 
   const session = await sessionRepo.findSessionBySessionId(decoded.sessionId);

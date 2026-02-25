@@ -9,7 +9,7 @@ import { extractAccesToken } from '../../shared/helpers/extractHeader.js';
 
 export const refreshSessionController: Controller = async (req, res, next) => {
   const oldRefreshToken = extractTokenFromCookie(req, config.jwt.refresh_token.cookie_name);
-  console.log('oldtokenresive ', oldRefreshToken);
+
   const { accessToken, refreshToken } = await refreshSessionService(oldRefreshToken);
 
   res.cookie(config.jwt.refresh_token.cookie_name, refreshToken, cookie.refreshTokenCookieOption);

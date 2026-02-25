@@ -28,7 +28,7 @@ describe('session service integration test', () => {
     refreshToken = tokens.refreshToken;
     const tokenHash = hash.sha256Hash(refreshToken);
     await sessionRepo.createSession({ sessionId, userId, tokenHash, deviceInfo: 'chrome', ipAddress: '17.0.0.0' });
-  });
+  }, 30000);
   afterAll(async () => {
     await sql`
     TRUNCATE TABLE
