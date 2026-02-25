@@ -12,6 +12,7 @@ describe('session service integration test', () => {
   let userId: string;
   let sessionId: string;
   let refreshToken: string;
+  let accessToken: string;
   beforeEach(async () => {
     // clear db
     await sql`
@@ -33,6 +34,7 @@ describe('session service integration test', () => {
     sessionId = crypto.randomUUID();
     const tokens = sessionToken.generateSessionTokens(userId, user?.role!, sessionId);
     refreshToken = tokens.refreshToken;
+    accessToken = tokens.accessToken;
     const tokenHash = hash.sha256Hash(refreshToken);
 
     //create session
@@ -177,8 +179,41 @@ describe('session service integration test', () => {
       expect(res.body.success).toBe(false);
     });
   });
-  /* =====================================================
-      ALL LOGOUT
-  ===================================================== */
-  describe('POST/api/session/logout-all - integration test', () => {});
+  /* ===================================================== */
+  /*   ALL LOGOUT */
+  /*===================================================== */
+  describe('POST/api/session/logout-all - integration test', () => {
+    /* ===================================================== */
+    /*  SUCCESS ALL LOGOUT */
+    /*===================================================== */
+    it('should logout from all devices', async () => {
+      const res = await request(app).post('/api/session/logout-all').set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toBe('Logout from all device is succefull');
+      // 🔍 Verify all sessions deleted
+      const sessionCheck = await sessionRepo.findSessionByuserId(userId);
+
+      expect(sessionCheck).toBe(null);
+    });
+    /* ===================================================== */
+    /*  ACCESS TOKEN MISING */
+    /*===================================================== */
+    it('should fail if access token missing', async () => {
+      const res = await request(app).post('/api/session/logout-all');
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+    /* ===================================================== */
+    /*  INVALID ACCESS TOKEN */
+    /*===================================================== */
+    it('should fail if access token invalid', async () => {
+      const res = await request(app).post('/api/session/logout-all').set('Authorization', 'Bearer invalidtoken');
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+  });
 });
