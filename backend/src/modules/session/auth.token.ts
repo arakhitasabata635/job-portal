@@ -9,17 +9,21 @@ const refreshSecret = config.jwt.refresh_token.secret;
 interface RefreshPayload {
   userId: string;
   sessionId: string;
+  randomString: string;
 }
 interface AccessPayload {
   userId: string;
   role: string;
+  randomString: string;
 }
 
 const generateAccessToken = (data: AccessPayload) => {
+  data.randomString = crypto.randomUUID();
   return jwt.sign(data, accessSecreate, { expiresIn: config.jwt.access_token.expire });
 };
 
 const generateRefreshToken = (data: RefreshPayload) => {
+  data.randomString = crypto.randomUUID();
   return jwt.sign(data, refreshSecret, { expiresIn: config.jwt.refresh_token.expire });
 };
 
