@@ -137,7 +137,6 @@ describe('auth service - unit test', () => {
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
       expect(result.userDTO.email).toBe(mockUser.email);
-      expect(result.userDTO).toBe(mockUser.email);
       expect(authCtx.sessionService.createSessionForUser).toHaveBeenCalledTimes(1);
     });
     /* ==========================================
