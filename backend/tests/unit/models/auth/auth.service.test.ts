@@ -128,8 +128,7 @@ describe('auth service - unit test', () => {
      SUCCESS LOGIN
   ========================================== */
     it('should login successfully', async () => {
-      mockUser.email_verified = true;
-      authCtx.authRepo.findUserByEmail.mockResolvedValue(mockUser);
+      authCtx.authRepo.findUserByEmail.mockResolvedValue({ ...mockUser, email_verified: true });
       authCtx.hash.compareBcryptHash.mockResolvedValue(true);
       authCtx.sessionService.createSessionForUser.mockResolvedValue(tokens);
 
@@ -137,7 +136,65 @@ describe('auth service - unit test', () => {
 
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
+      expect(result.userDTO.email).toBe(mockUser.email);
+      expect(result.userDTO).toBe(mockUser.email);
       expect(authCtx.sessionService.createSessionForUser).toHaveBeenCalledTimes(1);
+    });
+    /* ==========================================
+     USER NOT FOUND
+  ========================================== */
+    it('should throw error if user not found', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(null);
+      await expect(authCtx.authService.loginUserService(mockLoginInput, mockDeviceInfo, mockIpAddress)).rejects.toThrow(
+        'Invalid email or password',
+      );
+      expect(authCtx.sessionService.createSessionForUser).not.toHaveBeenCalled();
+    });
+    /* ==========================================
+     EMAIL NOT VERIFIED
+  ========================================== */
+    it('should throw  if email not verified', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue({ ...mockUser, email_verified: false });
+
+      await expect(authCtx.authService.loginUserService(mockLoginInput, mockDeviceInfo, mockIpAddress)).rejects.toThrow(
+        'Please verify your email first',
+      );
+      expect(authCtx.sessionService.createSessionForUser).not.toHaveBeenCalled();
+    });
+    /* ==========================================
+     PASSWORD NULL
+  ========================================== */
+    it('should throw if password is null', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue({ ...mockUser, email_verified: true, password: null });
+
+      await expect(authCtx.authService.loginUserService(mockLoginInput, mockDeviceInfo, mockIpAddress)).rejects.toThrow(
+        'Invalid email or password',
+      );
+      expect(authCtx.sessionService.createSessionForUser).not.toHaveBeenCalled();
+    });
+    /* ==========================================
+     WRONG PASSWORD
+  ========================================== */
+    it('should throw if password does not match', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue({ ...mockUser, email_verified: true });
+      authCtx.hash.compareBcryptHash.mockResolvedValue(false);
+
+      await expect(authCtx.authService.loginUserService(mockLoginInput, mockDeviceInfo, mockIpAddress)).rejects.toThrow(
+        'Invalid email or password',
+      );
+      expect(authCtx.sessionService.createSessionForUser).not.toHaveBeenCalled();
+    });
+    /* ==========================================
+     SESSION CREATION FAILS
+  ========================================== */
+    it('should throw if session creation fails', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue({ ...mockUser, email_verified: true });
+      authCtx.hash.compareBcryptHash.mockResolvedValue(true);
+      authCtx.sessionService.createSessionForUser.mockRejectedValue(new Error('Session error'));
+
+      await expect(
+        authCtx.authService.loginUserService(mockLoginInput, mockDeviceInfo, mockIpAddress),
+      ).rejects.toThrow();
     });
   });
 });
