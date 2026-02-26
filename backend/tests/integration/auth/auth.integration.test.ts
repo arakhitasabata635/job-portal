@@ -2,6 +2,7 @@ import app from '@/app.js';
 import request from 'supertest';
 import * as hash from '@/shared/helpers/hash.helper.js';
 import * as authRepo from '@/modules/auth/auth.repository.js';
+import * as passwordResetRepo from '@/modules/auth/password-reset.repository.js';
 import { UserRole } from '@/types/role.js';
 import { sql } from '@/config/db.js';
 describe('auth service integrtion test', () => {
@@ -90,6 +91,9 @@ describe('auth service integrtion test', () => {
       expect(res.body.success).toBe(false);
     });
   });
+  /* =====================================================
+     LOGIN USER
+  ===================================================== */
   describe('Auth Integration - Login', () => {
     let user: Awaited<ReturnType<typeof authRepo.createUser>>;
     beforeEach(async () => {
@@ -157,4 +161,52 @@ describe('auth service integrtion test', () => {
       expect(res.body.success).toBe(false);
     });
   });
+  /* =====================================================
+     FORGOT PASSWORD
+  ===================================================== */
+  describe('forgot password integration test', () => {
+    let user: Awaited<ReturnType<typeof authRepo.createUser>>;
+    beforeEach(async () => {
+      const hashedPassword = await hash.bcryptHash(userData.password);
+      user = await authRepo.createUser({ ...userData, password: hashedPassword });
+    }, 30000);
+
+    /* =====================================================
+    SUCCESS
+  ===================================================== */
+    it('should successfully send the link for forgotpassword', async () => {
+      const res = await request(app).post('/api/auth/forgot-password').send({ email: userData.email });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const record = await passwordResetRepo.findByUserId(user!.user_id);
+
+      expect(record?.user_id).toBeDefined();
+    });
+    /* ==========================================
+     EMAIL DOES NOT EXIST (Silent)
+  ========================================== */
+    it('should still return 200 if email not found', async () => {
+      const res = await request(app).post('/api/auth/forgot-password').send({ email: 'unknow@gmail.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const record = await passwordResetRepo.findByUserId(user!.user_id);
+
+      expect(record?.user_id).not.toBeDefined();
+    });
+    /* ==========================================
+     VALIDATION FAILURE
+  ========================================== */
+    it('should fail if email missing', async () => {
+      const res = await request(app).post('/api/auth/forgot-password').send({});
+
+      expect(res.status).toBe(400);
+    });
+  });
+  /* =====================================================
+     RESET PASSWORD
+  ===================================================== */
 });

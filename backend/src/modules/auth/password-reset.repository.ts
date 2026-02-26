@@ -34,3 +34,10 @@ export const markUsed = async (id: string) => {
   WHERE id= ${id}
   `;
 };
+
+export const findByUserId = async (userId: string): Promise<ResetPasswordSchema | null> => {
+  const [record] = await sql`
+SELECT * FROM password_reset_tokens WHERE user_id= ${userId}
+`;
+  return record ? (record as ResetPasswordSchema) : null;
+};
