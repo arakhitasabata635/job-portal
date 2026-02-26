@@ -12,6 +12,26 @@ describe('auth service - unit test', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  const mockUser = {
+    user_id: 'user-1',
+    name: 'Test User',
+    email: 'test@example.com',
+    password: 'hash-password',
+    email_verified: false,
+    phone_number: '9999999999',
+    role: UserRole.JOBSEEKER,
+    created_at: new Date(),
+  };
+  const mockUserDTO = {
+    userId: 'user-1',
+    name: 'Test User',
+    email: 'test@example.com',
+    isEmailVerify: false,
+    phoneNumber: '9999999999',
+    role: UserRole.JOBSEEKER,
+    createdAt: new Date(),
+  };
   /* =====================================================
     create user
   ===================================================== */
@@ -22,25 +42,6 @@ describe('auth service - unit test', () => {
       password: 'Password123',
       phoneNumber: '9999999999',
       role: UserRole.JOBSEEKER,
-    };
-    const mockUser = {
-      user_id: 'user-1',
-      name: 'Test User',
-      email: 'test@example.com',
-      password: 'hash-password',
-      email_verified: false,
-      phone_number: '9999999999',
-      role: UserRole.JOBSEEKER,
-      created_at: new Date(),
-    };
-    const mockUserDTO = {
-      userId: 'user-1',
-      name: 'Test User',
-      email: 'test@example.com',
-      isEmailVerify: false,
-      phoneNumber: '9999999999',
-      role: UserRole.JOBSEEKER,
-      createdAt: new Date(),
     };
     /* =====================================================
      SUCCESS CASE
@@ -112,6 +113,31 @@ describe('auth service - unit test', () => {
       authCtx.emailService.emailService.sendVarifyEmail.mockRejectedValue(new Error('Email Service error'));
 
       await expect(authCtx.authService.registerUserService(mockInput)).rejects.toThrow();
+    });
+  });
+  describe('login user service', () => {
+    const mockLoginInput = {
+      email: 'test@example.com',
+      password: 'Password123',
+    };
+    const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
+    const mockDeviceInfo = 'chrome';
+    const mockIpAddress = '127.0.0.0';
+
+    /* ==========================================
+     SUCCESS LOGIN
+  ========================================== */
+    it('should login successfully', async () => {
+      mockUser.email_verified = true;
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(mockUser);
+      authCtx.hash.compareBcryptHash.mockResolvedValue(true);
+      authCtx.sessionService.createSessionForUser.mockResolvedValue(tokens);
+
+      const result = await authCtx.authService.loginUserService(mockLoginInput, mockDeviceInfo, mockIpAddress);
+
+      expect(result.accessToken).toBe('access-token');
+      expect(result.refreshToken).toBe('refresh-token');
+      expect(authCtx.sessionService.createSessionForUser).toHaveBeenCalledTimes(1);
     });
   });
 });

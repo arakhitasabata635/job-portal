@@ -10,6 +10,7 @@ export const setupAuthTest = async () => {
   }));
   jest.unstable_mockModule('@/shared/helpers/hash.helper.js', () => ({
     bcryptHash: jest.fn(),
+    compareBcryptHash: jest.fn(),
     sha256Hash: jest.fn(),
   }));
   jest.unstable_mockModule('@/modules/email/email.service.js', () => ({
@@ -21,12 +22,16 @@ export const setupAuthTest = async () => {
   jest.unstable_mockModule('@/modules/auth/email-verify.repository.js', () => ({
     create: jest.fn(),
   }));
+  jest.unstable_mockModule('@/modules/session/session.service.js', () => ({
+    createSessionForUser: jest.fn(),
+  }));
 
   const authService = await import('@/modules/auth/auth.service.js');
   const authRepo = await import('@/modules/auth/auth.repository.js');
   const authMapper = await import('@/modules/auth/auth.mapper.js');
   const emailVerificationRepo = await import('@/modules/auth/email-verify.repository.js');
   const emailService = await import('@/modules/email/email.service.js');
+  const sessionService = await import('@/modules/session/session.service.js');
   const hash = await import('@/shared/helpers/hash.helper.js');
 
   return {
@@ -35,6 +40,7 @@ export const setupAuthTest = async () => {
     authRepo: authRepo as jest.Mocked<typeof authRepo>,
     emailVerificationRepo: emailVerificationRepo as jest.Mocked<typeof emailVerificationRepo>,
     emailService: emailService as jest.Mocked<typeof emailService>,
+    sessionService: sessionService as jest.Mocked<typeof sessionService>,
     hash: hash as jest.Mocked<typeof hash>,
   };
 };
