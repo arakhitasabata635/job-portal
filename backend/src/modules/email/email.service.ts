@@ -16,6 +16,7 @@ class EmailService {
     });
   }
   async sendPasswordResetMail(email: string, resetLink: string) {
+    if (config.node_env === 'test') return;
     await this.transporter.sendMail({
       from: `"Support" <${config.emailOption.smtpUser}>`,
       to: email,
@@ -29,6 +30,7 @@ class EmailService {
     });
   }
   async sendVarifyEmail(email: string, verifyLink: string) {
+    if (config.node_env === 'test') return;
     await this.transporter.sendMail({
       from: `${config.emailOption.smtpUser}`,
       to: email,
