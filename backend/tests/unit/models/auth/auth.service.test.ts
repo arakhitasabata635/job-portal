@@ -24,13 +24,23 @@ describe('auth service - unit test', () => {
       role: UserRole.JOBSEEKER,
     };
     const mockUser = {
-      user_id: crypto.randomUUID(),
+      user_id: 'user-1',
       name: 'Test User',
       email: 'test@example.com',
+      password: 'hash-password',
       email_verified: false,
       phone_number: '9999999999',
       role: UserRole.JOBSEEKER,
       created_at: new Date(),
+    };
+    const mockUserDTO = {
+      userId: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      isEmailVerify: false,
+      phoneNumber: '9999999999',
+      role: UserRole.JOBSEEKER,
+      createdAt: new Date(),
     };
     /* =====================================================
      SUCCESS CASE
@@ -42,6 +52,7 @@ describe('auth service - unit test', () => {
       authCtx.hash.sha256Hash.mockReturnValue('hash-token');
       authCtx.emailService.emailService.sendVarifyEmail.mockResolvedValue(undefined);
       authCtx.emailVerificationRepo.create.mockResolvedValue(undefined);
+      authCtx.authMapper.toUserDTO.mockReturnValue(mockUserDTO);
 
       const result = await authCtx.authService.registerUserService(mockInput);
 
@@ -51,7 +62,56 @@ describe('auth service - unit test', () => {
       expect(authCtx.hash.sha256Hash).toHaveBeenCalledTimes(1);
       expect(authCtx.emailService.emailService.sendVarifyEmail).toHaveBeenCalledTimes(1);
       expect(authCtx.emailVerificationRepo.create).toHaveBeenCalledTimes(1);
+      expect(authCtx.authMapper.toUserDTO).toHaveBeenCalledTimes(1);
+      expect(result).not.toHaveProperty('password');
       expect(result.email).toBe(mockInput.email);
+    });
+    /* =====================================================
+     USER ALREADY EXISTS
+  ===================================================== */
+    it('should throw  user already exists', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(mockUser);
+
+      await expect(authCtx.authService.registerUserService(mockInput)).rejects.toThrow('User already Exist.');
+
+      expect(authCtx.hash.bcryptHash).not.toHaveBeenCalled();
+    });
+    /* =====================================================
+     CREATE USER FAILS
+  ===================================================== */
+    it('should throw if user creation fail', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(null);
+      authCtx.hash.bcryptHash.mockResolvedValue('hash-password');
+      authCtx.authRepo.createUser.mockResolvedValue(null);
+
+      await expect(authCtx.authService.registerUserService(mockInput)).rejects.toThrow(
+        'An unexpected error occurred. Please try again.',
+      );
+      expect(authCtx.hash.sha256Hash).not.toHaveBeenCalled();
+    });
+    /* =====================================================
+     EMAIL VERIFICATION FAILS
+  ===================================================== */
+    it('should throw if email verification creation fails', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(null);
+      authCtx.hash.bcryptHash.mockResolvedValue('hash-password');
+      authCtx.authRepo.createUser.mockResolvedValue(mockUser);
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.emailService.emailService.sendVarifyEmail.mockRejectedValue(new Error('DB error'));
+
+      await expect(authCtx.authService.registerUserService(mockInput)).rejects.toThrow();
+    });
+    /* =====================================================
+     EMAIL SERVICE FAILS
+  ===================================================== */
+    it('should throw if email sending fails', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(null);
+      authCtx.hash.bcryptHash.mockResolvedValue('hash-password');
+      authCtx.authRepo.createUser.mockResolvedValue(mockUser);
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.emailService.emailService.sendVarifyEmail.mockRejectedValue(new Error('Email Service error'));
+
+      await expect(authCtx.authService.registerUserService(mockInput)).rejects.toThrow();
     });
   });
 });

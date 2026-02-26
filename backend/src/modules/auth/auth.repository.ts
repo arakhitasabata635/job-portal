@@ -4,7 +4,12 @@ import { sql } from '../../config/db.js';
 import { UserRole } from '../../types/role.js';
 import { UserEntity } from './auth.types.js';
 
-export const findUserByEmail = async (email: string): Promise<UserEntity | null> => {
+export const findUserByEmail = async (
+  email: string,
+): Promise<Pick<
+  UserEntity,
+  'user_id' | 'name' | 'email' | 'role' | 'password' | 'phone_number' | 'created_at' | 'email_verified'
+> | null> => {
   const [user] = await sql`
     SELECT * FROM users WHERE email = ${email}
   `;
