@@ -51,11 +51,12 @@ describe('auth service integrtion test', () => {
   describe('Auth Integration - Login', () => {
     it('should login and create session in DB', async () => {
       const hashedPassword = await hash.bcryptHash(userData.password);
-      await authRepo.createUser({ ...userData, password: hashedPassword });
+      const user = await authRepo.createUser({ ...userData, password: hashedPassword });
+      await authRepo.markEmailVerified(user!.user_id);
 
       const response = await request(app).post('/api/auth/login').send({
-        email: 'work.arakhita@gmail.com',
-        password: 'arakhita',
+        email: userData.email,
+        password: userData.password,
       });
 
       expect(response.status).toBe(200);
