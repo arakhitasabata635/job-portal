@@ -47,6 +47,48 @@ describe('auth service integrtion test', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.email).toBe(userData.email);
     }, 30000);
+    /* =====================================================
+     DUPLICATE EMAIL
+  ===================================================== */
+    it('should fail if email already exists', async () => {
+      await authRepo.createUser(userData);
+
+      const res = await request(app).post('/api/auth/register').send(userData);
+
+      expect(res.status).toBe(409);
+      expect(res.body.success).toBe(false);
+    });
+    /* =====================================================
+     VALIDATION FAILURE ALL FIELD REQUIRED
+  ===================================================== */
+    it('should fail if required fields missing', async () => {
+      const res = await request(app).post('/api/auth/register').send({ email: 'invalid' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+    /* =====================================================
+     INVALID EMAIL FORMAT
+  ===================================================== */
+    it('should fail for invalid email format', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...userData, email: 'invalid' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+    /* =====================================================
+     WEAK PASSWORD (if zod validates)
+  ===================================================== */
+    it('should fail for weak password', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...userData, password: '123' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
   });
   describe('Auth Integration - Login', () => {
     it('should login and create session in DB', async () => {
