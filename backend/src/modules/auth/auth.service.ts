@@ -115,7 +115,7 @@ export const resetPasswordService = async (input: ResetPasswordInput) => {
   if (record.used)
     throw new AppError(401, 'This link has already been used. If you still need help, request a new link.');
 
-  const hashPassword = await bcrypt.hash(input.password, 10);
+  const hashPassword = await hash.bcryptHash(input.password);
 
   await authRepo.updatePassword(record.user_id, hashPassword);
 

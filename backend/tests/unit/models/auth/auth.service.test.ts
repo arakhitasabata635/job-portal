@@ -249,4 +249,59 @@ describe('auth service - unit test', () => {
       await expect(authCtx.authService.forgotPasswordService({ email: mockUser.email })).rejects.toThrow();
     });
   });
+  /* ======================================
+   RESET PASSWORD
+====================================== */
+  describe('reset password service unit test', () => {
+    const input = {
+      token: 'raw-token',
+      password: 'NewPassword123',
+    };
+    const mockRecord = {
+      id: 'reset-id',
+      user_id: 'user-id',
+      token_hash: 'hash-token',
+      used: false,
+      expires_at: new Date(),
+    };
+    /* ======================================
+     SUCCESS
+====================================== */
+    it('should reset password successfully', async () => {
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.passwordResetRepo.findByHashToken.mockResolvedValue(mockRecord);
+      authCtx.hash.bcryptHash.mockResolvedValue('hash-password');
+      authCtx.authRepo.updatePassword.mockResolvedValue(undefined);
+      authCtx.passwordResetRepo.markUsed.mockResolvedValue(undefined);
+      authCtx.sessionRepo.deleteAllSessionsByUserId.mockResolvedValue(undefined);
+
+      await authCtx.authService.resetPasswordService(input);
+
+      expect(authCtx.passwordResetRepo.findByHashToken).toHaveBeenCalled();
+      expect(authCtx.hash.bcryptHash).toHaveBeenCalledWith(input.password);
+      expect(authCtx.authRepo.updatePassword).toHaveBeenCalledWith(mockRecord.user_id, 'hash-password');
+      expect(authCtx.passwordResetRepo.markUsed).toHaveBeenCalled();
+      expect(authCtx.sessionRepo.deleteAllSessionsByUserId).toHaveBeenCalled();
+    });
+    /* ======================================
+     TOKEN NOT EXIST
+====================================== */
+    it('should throw if token not found', async () => {
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.passwordResetRepo.findByHashToken.mockResolvedValue(null);
+
+      await expect(authCtx.authService.resetPasswordService(input)).rejects.toThrow();
+      expect(authCtx.authRepo.updatePassword).not.toHaveBeenCalled();
+    });
+    /* ======================================
+     TOKEN USED
+====================================== */
+    it('should throw if token already used', async () => {
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.passwordResetRepo.findByHashToken.mockResolvedValue({ ...mockRecord, used: true });
+
+      await expect(authCtx.authService.resetPasswordService(input)).rejects.toThrow();
+      expect(authCtx.authRepo.updatePassword).not.toHaveBeenCalled();
+    });
+  });
 });
