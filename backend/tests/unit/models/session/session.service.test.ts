@@ -317,6 +317,7 @@ describe('session service', () => {
     const mockaccessDecoded = {
       userId: 'user-1',
       role: UserRole.JOBSEEKER,
+      randomString: 'arsknnjn',
     };
     beforeEach(() => {
       jest.clearAllMocks();

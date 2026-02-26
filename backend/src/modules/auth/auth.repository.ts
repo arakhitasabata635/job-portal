@@ -46,7 +46,12 @@ interface CreateUserInput {
   emailVerified?: boolean;
 }
 
-export const createUser = async (data: CreateUserInput): Promise<UserEntity | null> => {
+export const createUser = async (
+  data: CreateUserInput,
+): Promise<Pick<
+  UserEntity,
+  'user_id' | 'name' | 'email' | 'role' | 'phone_number' | 'created_at' | 'email_verified'
+> | null> => {
   const [user] = await sql`
     INSERT INTO users (name, email, password, phone_number, role, email_verified)
     VALUES (
