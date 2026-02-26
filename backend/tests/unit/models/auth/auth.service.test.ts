@@ -35,7 +35,7 @@ describe('auth service - unit test', () => {
   /* =====================================================
     create user
   ===================================================== */
-  describe('create user service', () => {
+  describe('create user service unit test', () => {
     const mockInput = {
       name: 'Test User',
       email: 'test@example.com',
@@ -115,7 +115,10 @@ describe('auth service - unit test', () => {
       await expect(authCtx.authService.registerUserService(mockInput)).rejects.toThrow();
     });
   });
-  describe('login user service', () => {
+  /* ======================================
+   LOGIN
+====================================== */
+  describe('login user service unit test', () => {
     const mockLoginInput = {
       email: 'test@example.com',
       password: 'Password123',
@@ -194,6 +197,25 @@ describe('auth service - unit test', () => {
       await expect(
         authCtx.authService.loginUserService(mockLoginInput, mockDeviceInfo, mockIpAddress),
       ).rejects.toThrow();
+    });
+  });
+  /* ======================================
+   FORGOT PASSOWORD
+====================================== */
+  describe('forgot password service unit test', () => {
+    /* ======================================
+   SUCCESS
+====================================== */
+    it('should send mail for password reset', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(mockUser);
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.passwordResetRepo.create.mockResolvedValue(undefined);
+      authCtx.emailService.emailService.sendPasswordResetMail.mockResolvedValue(undefined);
+
+      await authCtx.authService.forgotPasswordService({ email: mockUser.email });
+
+      expect(authCtx.passwordResetRepo.create).toHaveBeenCalled();
+      expect(authCtx.emailService.emailService.sendPasswordResetMail).toHaveBeenCalled();
     });
   });
 });

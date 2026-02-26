@@ -21,13 +21,18 @@ export const setupAuthTest = async () => {
   }));
   jest.unstable_mockModule('@/modules/auth/email-verify.repository.js', () => ({
     create: jest.fn(),
+    sendPasswordResetMail: jest.fn(),
   }));
   jest.unstable_mockModule('@/modules/session/session.service.js', () => ({
     createSessionForUser: jest.fn(),
   }));
+  jest.unstable_mockModule('@/modules/auth/password-reset.repository.js', () => ({
+    create: jest.fn(),
+  }));
 
   const authService = await import('@/modules/auth/auth.service.js');
   const authRepo = await import('@/modules/auth/auth.repository.js');
+  const passwordResetRepo = await import('@/modules/auth/password-reset.repository.js');
   const authMapper = await import('@/modules/auth/auth.mapper.js');
   const emailVerificationRepo = await import('@/modules/auth/email-verify.repository.js');
   const emailService = await import('@/modules/email/email.service.js');
@@ -38,6 +43,7 @@ export const setupAuthTest = async () => {
     authService,
     authMapper: authMapper as jest.Mocked<typeof authMapper>,
     authRepo: authRepo as jest.Mocked<typeof authRepo>,
+    passwordResetRepo: passwordResetRepo as jest.Mocked<typeof passwordResetRepo>,
     emailVerificationRepo: emailVerificationRepo as jest.Mocked<typeof emailVerificationRepo>,
     emailService: emailService as jest.Mocked<typeof emailService>,
     sessionService: sessionService as jest.Mocked<typeof sessionService>,
