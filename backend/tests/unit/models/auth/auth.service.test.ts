@@ -217,5 +217,36 @@ describe('auth service - unit test', () => {
       expect(authCtx.passwordResetRepo.create).toHaveBeenCalled();
       expect(authCtx.emailService.emailService.sendPasswordResetMail).toHaveBeenCalled();
     });
+    /* ======================================
+   USER NOT EXIST
+====================================== */
+    it('should silently return if user does not exist', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(null);
+
+      await expect(authCtx.authService.forgotPasswordService({ email: mockUser.email })).resolves.toBeUndefined();
+
+      expect(authCtx.emailService.emailService.sendPasswordResetMail).not.toHaveBeenCalled();
+    });
+    /* ======================================
+   TOKEN CREATION FAIL
+====================================== */
+    it('should throw if password varification token creation fail', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(mockUser);
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.passwordResetRepo.create.mockRejectedValue(new Error('DB Error'));
+
+      await expect(authCtx.authService.forgotPasswordService({ email: mockUser.email })).rejects.toThrow();
+    });
+    /* ======================================
+   EMAIL SENDING FAIL
+====================================== */
+    it('should throw if email sending fails', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(mockUser);
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.passwordResetRepo.create.mockResolvedValue();
+      authCtx.emailService.emailService.sendPasswordResetMail.mockRejectedValue(new Error('Email DB Error'));
+
+      await expect(authCtx.authService.forgotPasswordService({ email: mockUser.email })).rejects.toThrow();
+    });
   });
 });
