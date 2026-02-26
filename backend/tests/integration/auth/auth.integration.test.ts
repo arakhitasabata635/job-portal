@@ -91,20 +91,70 @@ describe('auth service integrtion test', () => {
     });
   });
   describe('Auth Integration - Login', () => {
-    it('should login and create session in DB', async () => {
+    let user: Awaited<ReturnType<typeof authRepo.createUser>>;
+    beforeEach(async () => {
       const hashedPassword = await hash.bcryptHash(userData.password);
-      const user = await authRepo.createUser({ ...userData, password: hashedPassword });
+      user = await authRepo.createUser({ ...userData, password: hashedPassword });
+    }, 30000);
+    it('should login and create session in DB', async () => {
       await authRepo.markEmailVerified(user!.user_id);
 
-      const response = await request(app).post('/api/auth/login').send({
+      const res = await request(app).post('/api/auth/login').send({
         email: userData.email,
         password: userData.password,
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body.data).toHaveProperty('accessToken');
-      expect(response.body.data).toHaveProperty('userDTO');
-      expect(response.body).toBeDefined();
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveProperty('accessToken');
+      expect(res.body.data).toHaveProperty('userDTO');
+      expect(res.body).toBeDefined();
     }, 30000);
+    /* ==========================================
+     USER NOT FOUND
+  ========================================== */
+    it('should fail if user not found', async () => {
+      const res = await request(app).post('/api/auth/login').send({
+        email: 'test@gmail.com',
+        password: userData.password,
+      });
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+    /* ==========================================
+    EMAIL NOT VERIFIED
+    ========================================== */
+    it('should fail if email not verified', async () => {
+      const res = await request(app).post('/api/auth/login').send({
+        email: userData.email,
+        password: userData.password,
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+    });
+    /* ==========================================
+     WRONG PASSWORD
+  ========================================== */
+    it('should fail if password incorrect', async () => {
+      const res = await request(app).post('/api/auth/login').send({
+        email: userData.email,
+        password: 'pass123456',
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+    });
+    /* ==========================================
+     VALIDATION ERROR
+  ========================================== */
+    it('should fail if email missing', async () => {
+      const res = await request(app).post('/api/auth/login').send({
+        password: 'pass123456',
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
   });
 });
