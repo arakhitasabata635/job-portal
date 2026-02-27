@@ -9,13 +9,12 @@ import { Controller } from '../../types/controller.js';
 //functions
 import { sendSuccess } from '../../shared/response/response.js';
 import { getDeviceInfo, getIp } from '../../shared/helpers/device.helper.js';
-import { generateUrlForGoogleOauth } from './providers/google.provider.js';
 
 import * as cookie from '../../shared/helpers/cookie.helper.js';
-import { googleCallbackService } from './google.service.js';
+import * as oauth from './oauth.service.js';
 
 export const generateGoogleOauthURL: Controller = async (req, res, next) => {
-  const { url, codeVerifier, state } = await generateUrlForGoogleOauth();
+  const { url, codeVerifier, state } = await oauth.generateUrlForGoogleOauth();
 
   res.cookie('pkce_verifier', codeVerifier, cookie.oAuthCookieOption);
   res.cookie('google_state', state, cookie.oAuthCookieOption);
@@ -34,7 +33,7 @@ export const googleCallbackController: Controller = async (req, res, next) => {
   const deviceInfo = getDeviceInfo(req);
   const ipAddress = getIp(req);
 
-  const { userDTO, accessToken, refreshToken } = await googleCallbackService(
+  const { userDTO, accessToken, refreshToken } = await oauth.googleCallbackService(
     codeVerifier,
     code as string,
     deviceInfo,

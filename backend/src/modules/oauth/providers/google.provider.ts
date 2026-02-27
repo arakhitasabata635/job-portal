@@ -2,6 +2,7 @@ import { config } from '../../../config/env.js';
 import { CodeChallengeMethod, OAuth2Client } from 'google-auth-library';
 import { AppError } from '../../../shared/errors/appError.js';
 import crypto from 'crypto';
+import { GooglePayload } from '../oauth.type.js';
 
 const client = new OAuth2Client(
   config.oauth.google.client_id,
@@ -9,22 +10,18 @@ const client = new OAuth2Client(
   config.oauth.google.redirect_url,
 );
 
-export const generateUrlForGoogleOauth = async () => {
-  const state = crypto.randomBytes(16).toString('hex');
-  const codeVerifier = crypto.randomBytes(32).toString('hex');
-
-  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
-
+export const makeUrlForGoogleLogin = (state: string, codeChallenge: string) => {
   const url = client.generateAuthUrl({
     scope: ['openid', 'email', 'profile'],
     state,
     code_challenge: codeChallenge,
     code_challenge_method: CodeChallengeMethod.S256,
   });
-  return { url, codeVerifier, state };
+
+  return url;
 };
 
-export const verifyGoogleToken = async (codeVerifier: string, code: string) => {
+export const verifyGoogleToken = async (codeVerifier: string, code: string): Promise<GooglePayload> => {
   const { tokens } = await client.getToken({
     code,
     codeVerifier,
@@ -40,5 +37,5 @@ export const verifyGoogleToken = async (codeVerifier: string, code: string) => {
   const payload = ticket.getPayload();
 
   if (!payload) throw new AppError(401, 'Invalid Google token');
-  return payload;
+  return payload as GooglePayload;
 };
