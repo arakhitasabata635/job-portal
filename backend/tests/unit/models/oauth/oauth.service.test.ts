@@ -3,6 +3,9 @@ import { UserRole } from '@/types/role.js';
 import { googleOauthSetUp } from './oauth.test.setup.js';
 
 describe('oauth unit test', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   /* ======================================
    GOOGLE CALLBACK FUNCTION
 ====================================== */
@@ -11,9 +14,6 @@ describe('oauth unit test', () => {
 
     beforeAll(async () => {
       googleOauthCtx = await googleOauthSetUp();
-    });
-    beforeEach(() => {
-      jest.clearAllMocks();
     });
 
     const mockPayload = {

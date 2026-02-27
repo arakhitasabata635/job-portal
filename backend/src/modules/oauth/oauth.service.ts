@@ -3,6 +3,9 @@ import * as googleProvider from './providers/google.provider.js';
 import * as oauthUserService from './oauth.user.service.js';
 import crypto from 'crypto';
 
+/* ======================================
+   GOOGLE URL CREATE
+====================================== */
 export const generateUrlForGoogleOauth = async () => {
   const state = crypto.randomBytes(16).toString('hex');
   const codeVerifier = crypto.randomBytes(32).toString('hex');
