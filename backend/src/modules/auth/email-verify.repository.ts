@@ -37,3 +37,13 @@ export const deleteTokenByUserId = async (user_id: string) => {
    WHERE user_id = ${user_id}
   `;
 };
+
+export const findByUserId = async (userId: string): Promise<EmailVerificationEntity[] | null> => {
+  const record = await sql`
+    SELECT *
+    FROM email_verify_tokens
+    WHERE user_id = ${userId}
+  `;
+
+  return record.length ? (record as EmailVerificationEntity[]) : null;
+};

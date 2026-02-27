@@ -3,6 +3,7 @@ import request from 'supertest';
 import * as hash from '@/shared/helpers/hash.helper.js';
 import * as authRepo from '@/modules/auth/auth.repository.js';
 import * as passwordResetRepo from '@/modules/auth/password-reset.repository.js';
+import * as emailVerificationRepo from '@/modules/auth/email-verify.repository.js';
 import * as sessionRepo from '@/modules/session/session.repository.js';
 import { UserRole } from '@/types/role.js';
 import { sql } from '@/config/db.js';
@@ -223,7 +224,7 @@ describe('auth service integrtion test', () => {
       //create reset token
       const tokenHash = hash.sha256Hash(token);
       await passwordResetRepo.create(userId, tokenHash);
-    }, 50000);
+    }, 30000);
 
     /* ==========================================
      SUCCESS RESET
@@ -291,6 +292,89 @@ describe('auth service integrtion test', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
+    });
+  });
+  /* ======================================
+   EMAIL VERIFY
+====================================== */
+  describe('email verification integration test', () => {
+    let userId: string;
+    let token = crypto.randomBytes(32).toString('hex');
+    beforeEach(async () => {
+      //create user
+      const hashedPassword = await hash.bcryptHash(userData.password);
+      const user = await authRepo.createUser({ ...userData, password: hashedPassword });
+      userId = user?.user_id!;
+      //create reset token
+      const tokenHash = hash.sha256Hash(token);
+      await emailVerificationRepo.create(userId, tokenHash);
+    }, 30000);
+    /* ======================================
+   SUCCESS
+====================================== */
+    it('should verify email successfully', async () => {
+      const res = await request(app).post('/api/auth/verify-email').send({ token });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+    /* ======================================
+   INVALID TOKEN
+====================================== */
+    it('should fail with invalid token', async () => {
+      const res = await request(app)
+        .post('/api/auth/verify-email')
+        .send({ token: crypto.randomBytes(32).toString('hex') });
+
+      expect(res.status).toBe(401);
+    });
+    /* ======================================
+   VALIDATION ERROR
+====================================== */
+    it('should fail with invalid token', async () => {
+      const res = await request(app).post('/api/auth/verify-email').send({});
+
+      expect(res.status).toBe(400);
+    });
+  });
+  /* ======================================
+   RESEND EMAIL FOR VERIFICATION
+====================================== */
+  describe('resend email verification link', () => {
+    let userId: string;
+    beforeEach(async () => {
+      //create user
+      const hashedPassword = await hash.bcryptHash(userData.password);
+      const user = await authRepo.createUser({ ...userData, password: hashedPassword });
+
+      userId = user?.user_id!;
+      //create reset token
+      let token = crypto.randomBytes(32).toString('hex');
+      const tokenHash = hash.sha256Hash(token);
+      await emailVerificationRepo.create(user?.user_id!, tokenHash);
+    }, 30000);
+
+    /* ======================================
+   RESEND EMAIL FOR VERIFICATION
+====================================== */
+    it('should respond success send link', async () => {
+      const res = await request(app).post('/api/auth/resend-verifyEmail').send({ email: userData.email });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const record = await emailVerificationRepo.findByUserId(userId);
+
+      expect(record?.length).toBe(1);
+    });
+    /* ======================================
+   USER NOT EXIST
+====================================== */
+    it('should respond success even if user not exists', async () => {
+      const res = await request(app).post('/api/auth/resend-verifyEmail').send({ email: userData.email });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
     });
   });
 });
