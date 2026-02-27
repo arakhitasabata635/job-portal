@@ -5,6 +5,7 @@ export const setupAuthTest = async () => {
     createUser: jest.fn(),
     findUserByEmail: jest.fn(),
     updatePassword: jest.fn(),
+    markEmailVerified: jest.fn(),
   }));
   jest.unstable_mockModule('@/modules/auth/auth.mapper.js', () => ({
     toUserDTO: jest.fn(),
@@ -23,6 +24,9 @@ export const setupAuthTest = async () => {
   jest.unstable_mockModule('@/modules/auth/email-verify.repository.js', () => ({
     create: jest.fn(),
     sendPasswordResetMail: jest.fn(),
+    findByHashToken: jest.fn(),
+    deleteToken: jest.fn(),
+    deleteTokenByUserId: jest.fn(),
   }));
   jest.unstable_mockModule('@/modules/session/session.service.js', () => ({
     createSessionForUser: jest.fn(),

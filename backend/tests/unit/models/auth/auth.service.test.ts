@@ -304,4 +304,97 @@ describe('auth service - unit test', () => {
       expect(authCtx.authRepo.updatePassword).not.toHaveBeenCalled();
     });
   });
+  /* ======================================
+   EMAIL VERIFY
+====================================== */
+  describe('email verify service unit test', () => {
+    const input = {
+      token: 'raw-token',
+    };
+    const mockRecord = {
+      id: 'reset-id',
+      user_id: 'user-id',
+      token_hash: 'hash-token',
+      expires_at: new Date(),
+    };
+    /* ======================================
+     SUCCESS
+====================================== */
+    it('should successfully mark the email_verify true', async () => {
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.emailVerificationRepo.findByHashToken.mockResolvedValue(mockRecord);
+      authCtx.authRepo.markEmailVerified.mockResolvedValue(undefined);
+      authCtx.emailVerificationRepo.deleteToken.mockResolvedValue(undefined);
+
+      await authCtx.authService.emailVerifyService(input);
+
+      expect(authCtx.hash.sha256Hash).toHaveBeenCalledWith(input.token);
+      expect(authCtx.emailVerificationRepo.findByHashToken).toHaveBeenCalledWith('hash-token');
+      expect(authCtx.authRepo.markEmailVerified).toHaveBeenCalled();
+      expect(authCtx.emailVerificationRepo.deleteToken).toHaveBeenCalled();
+    });
+    /* ======================================
+     RECORD NOT FOUND
+====================================== */
+    it('should throw record not found', async () => {
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.emailVerificationRepo.findByHashToken.mockResolvedValue(null);
+
+      await expect(authCtx.authService.emailVerifyService(input)).rejects.toThrow();
+      expect(authCtx.authRepo.markEmailVerified).not.toHaveBeenCalled();
+    });
+    /* ======================================
+     MARK EMAIL VERIFY NOT DONE
+====================================== */
+    it('should throw if mark email verify not done', async () => {
+      authCtx.hash.sha256Hash.mockReturnValue('hash-token');
+      authCtx.emailVerificationRepo.findByHashToken.mockResolvedValue(mockRecord);
+      authCtx.authRepo.markEmailVerified.mockRejectedValue(new Error('DB Error'));
+
+      await expect(authCtx.authService.emailVerifyService(input)).rejects.toThrow();
+      expect(authCtx.emailVerificationRepo.deleteToken).not.toHaveBeenCalled();
+    });
+  });
+  /* ======================================
+   RESEND EMAIL FOR VERIFICATION
+====================================== */
+  describe('resend email verification link unit test', () => {
+    /* ======================================
+   SUCCESS
+====================================== */
+    it('should resend verification email if user exists and not verified', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(mockUser);
+      authCtx.emailVerificationRepo.deleteTokenByUserId.mockResolvedValue(undefined);
+      authCtx.hash.sha256Hash.mockReturnValue('token-hash');
+      authCtx.emailVerificationRepo.create.mockResolvedValue(undefined);
+      authCtx.emailService.emailService.sendVarifyEmail.mockResolvedValue(undefined);
+
+      await authCtx.authService.resentEmailVerification({ email: mockUser.email });
+
+      expect(authCtx.emailVerificationRepo.deleteTokenByUserId).toHaveBeenCalledWith(mockUser.user_id);
+      expect(authCtx.emailVerificationRepo.create).toHaveBeenCalled();
+      expect(authCtx.emailService.emailService.sendVarifyEmail).toHaveBeenCalled();
+    });
+    /* ======================================
+   USER NOT FOUND
+====================================== */
+    it('should return silently if user not found', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue(null);
+
+      await authCtx.authService.resentEmailVerification({ email: 'notfound@mail.com' });
+
+      expect(authCtx.emailVerificationRepo.deleteTokenByUserId).not.toHaveBeenCalled();
+    });
+    /* ======================================
+   ALREADY VERIFIED
+====================================== */
+    it('should return silently if already verified', async () => {
+      authCtx.authRepo.findUserByEmail.mockResolvedValue({ ...mockUser, email_verified: true });
+
+      await authCtx.authService.resentEmailVerification({ email: mockUser.email });
+
+      expect(authCtx.emailVerificationRepo.deleteTokenByUserId).not.toHaveBeenCalled();
+      expect(authCtx.emailService.emailService.sendVarifyEmail).not.toHaveBeenCalled();
+    });
+  });
 });

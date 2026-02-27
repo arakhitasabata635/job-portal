@@ -1,5 +1,11 @@
 import { sql } from '../../config/db.js';
 
+interface EmailVerificationEntity {
+  id: string;
+  user_id: string;
+  token_hash: string;
+  expires_at: Date;
+}
 export const create = async (userId: string, token_hash: string) => {
   await sql`
     INSERT INTO email_verify_tokens 
@@ -8,7 +14,7 @@ export const create = async (userId: string, token_hash: string) => {
   `;
 };
 
-export const findByHashToken = async (token_hash: string) => {
+export const findByHashToken = async (token_hash: string): Promise<EmailVerificationEntity | null> => {
   const [record] = await sql`
     SELECT *
     FROM email_verify_tokens
@@ -16,7 +22,7 @@ export const findByHashToken = async (token_hash: string) => {
       AND expires_at > NOW()
   `;
 
-  return record;
+  return record ? (record as EmailVerificationEntity) : null;
 };
 
 export const deleteToken = async (token_hash: string) => {
