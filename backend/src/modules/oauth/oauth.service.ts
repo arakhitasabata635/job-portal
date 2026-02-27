@@ -1,6 +1,6 @@
 import * as sessionService from '../session/session.service.js';
 import * as googleProvider from './providers/google.provider.js';
-import * as oauthService from './oauth.user.service.js';
+import * as oauthUserService from './oauth.user.service.js';
 import crypto from 'crypto';
 
 export const generateUrlForGoogleOauth = async () => {
@@ -23,7 +23,7 @@ export const googleCallbackService = async (
 ) => {
   const payload = await googleProvider.verifyGoogleToken(codeVerifier, code);
 
-  const userDTO = await oauthService.findOrCreateUserFromGoogle(payload);
+  const userDTO = await oauthUserService.findOrCreateUserFromGoogle(payload);
 
   //create tokens
   const { accessToken, refreshToken } = await sessionService.createSessionForUser(userDTO, deviceInfo, ipAddress);
