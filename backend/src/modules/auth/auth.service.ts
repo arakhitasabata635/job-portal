@@ -1,6 +1,5 @@
 import { config } from '../../config/env.js';
 import { AppError } from '../../shared/errors/appError.js';
-import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
 //types

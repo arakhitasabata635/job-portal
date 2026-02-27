@@ -3,8 +3,10 @@ import request from 'supertest';
 import * as hash from '@/shared/helpers/hash.helper.js';
 import * as authRepo from '@/modules/auth/auth.repository.js';
 import * as passwordResetRepo from '@/modules/auth/password-reset.repository.js';
+import * as sessionRepo from '@/modules/session/session.repository.js';
 import { UserRole } from '@/types/role.js';
 import { sql } from '@/config/db.js';
+import crypto from 'crypto';
 describe('auth service integrtion test', () => {
   afterAll(async () => {
     await sql`
@@ -209,4 +211,86 @@ describe('auth service integrtion test', () => {
   /* =====================================================
      RESET PASSWORD
   ===================================================== */
+  describe('reset-password integration test', () => {
+    let userId: string;
+    let token = crypto.randomBytes(32).toString('hex');
+    let password = 'new123456';
+    beforeEach(async () => {
+      //create user
+      const hashedPassword = await hash.bcryptHash(userData.password);
+      const user = await authRepo.createUser({ ...userData, password: hashedPassword });
+      userId = user?.user_id!;
+      //create reset token
+      const tokenHash = hash.sha256Hash(token);
+      await passwordResetRepo.create(userId, tokenHash);
+    }, 50000);
+
+    /* ==========================================
+     SUCCESS RESET
+  ========================================== */
+    it('should reset password successfully', async () => {
+      //create session
+      await sessionRepo.createSession({
+        sessionId: crypto.randomUUID(),
+        userId,
+        tokenHash: 'hash value ',
+        deviceInfo: 'chrome',
+        ipAddress: 'ipAddress',
+      });
+
+      const res = await request(app).post('/api/auth/reset-password').send({ token, password });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      // verify password updated
+      const user = await authRepo.findUserByid(userId);
+      const match = await hash.compareBcryptHash(password, user?.password!);
+
+      expect(match).toBe(true);
+
+      // verify token marked used
+      const tokenCheck = await passwordResetRepo.findByUserId(userId);
+
+      expect(tokenCheck?.used).toBe(true);
+
+      // verify sessions deleted
+      const sessionCheck = await sessionRepo.findSessionByuserId(userId);
+
+      expect(sessionCheck).toBe(null);
+    }, 30000);
+    /* ==========================================
+     INVALID TOKEN
+  ========================================== */
+    it('should fail if token invalid', async () => {
+      const res = await request(app)
+        .post('/api/auth/reset-password')
+        .send({ token: crypto.randomBytes(32).toString('hex'), password });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+    /* ==========================================
+     TOKEN ALREADY USED
+  ========================================== */
+    it('should fail if token already used', async () => {
+      //markUsed
+      const record = await passwordResetRepo.findByUserId(userId);
+      await passwordResetRepo.markUsed(record?.id!);
+
+      const res = await request(app).post('/api/auth/reset-password').send({ token, password });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+    /* ==========================================
+    VALIDATION FAILURE
+    ========================================== */
+    it('should fail if password missing', async () => {
+      const res = await request(app).post('/api/auth/reset-password').send({ token });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+  });
 });
