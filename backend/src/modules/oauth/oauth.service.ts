@@ -6,7 +6,8 @@ import crypto from 'crypto';
 /* ======================================
    GOOGLE URL CREATE
 ====================================== */
-export const generateUrlForGoogleOauth = async () => {
+export const generateUrlForGoogleOauth = async (): Promise<{ url: string; codeVerifier: string; state: string }> => {
+  console.log('original');
   const state = crypto.randomBytes(16).toString('hex');
   const codeVerifier = crypto.randomBytes(32).toString('hex');
 

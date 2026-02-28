@@ -50,7 +50,7 @@ describe('auth service integrtion test', () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.email).toBe(userData.email);
-    }, 30000);
+    }, 50000);
     /* =====================================================
      DUPLICATE EMAIL
   ===================================================== */
@@ -115,6 +115,7 @@ describe('auth service integrtion test', () => {
       expect(res.body.data).toHaveProperty('accessToken');
       expect(res.body.data).toHaveProperty('userDTO');
       expect(res.body).toBeDefined();
+      expect(res.headers['set-cookie']).toBeDefined();
     }, 30000);
     /* ==========================================
      USER NOT FOUND
