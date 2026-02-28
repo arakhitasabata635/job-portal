@@ -22,6 +22,7 @@ export const makeUrlForGoogleLogin = (state: string, codeChallenge: string) => {
 };
 
 export const verifyGoogleToken = async (codeVerifier: string, code: string): Promise<GooglePayload> => {
+  console.log('original');
   const { tokens } = await client.getToken({
     code,
     codeVerifier,
