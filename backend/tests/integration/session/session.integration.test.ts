@@ -75,7 +75,7 @@ describe('session service integration test', () => {
     it('should fail if no refresh token provide', async () => {
       const res = await request(app).post('/api/session/refresh');
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
     });
     /* ========================================================= */

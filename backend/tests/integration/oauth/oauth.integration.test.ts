@@ -102,10 +102,9 @@ describe('oauth integration testing', () => {
     const validState = 'valid-state';
     const validCode = 'valid-code';
     const validVerifier = 'valid-verifier';
-
-    // =============================
-    // ✅ SUCCESS FLOW
-    // =============================
+    /* ======================================
+   SUCCESS
+====================================== */
     it('should login successfully and return accessToken + set refresh cookie', async () => {
       oauthCtx.googleProvider.verifyGoogleToken.mockResolvedValue(validPayload);
       const res = await request(oauthCtx.app)
@@ -120,6 +119,66 @@ describe('oauth integration testing', () => {
       expect(res.headers['set-cookie']).toEqual(
         expect.arrayContaining([expect.stringContaining(config.jwt.refresh_token.cookie_name)]),
       );
+    }, 30000);
+    /* ======================================
+   STATE MISMATCH
+====================================== */
+    it('should return 404 if state mismatch', async () => {
+      const res = await request(oauthCtx.app)
+        .get('/api/oauth/google-callback')
+        .query({ state: 'wrong-state', code: validCode })
+        .set('Cookie', [`pkce_verifier=${validVerifier}`, `google_state=${validState}`]);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+    /* ======================================
+   QUERY PARAMS MISSING
+====================================== */
+    it('should return 404 if state mismatch', async () => {
+      const res = await request(oauthCtx.app)
+        .get('/api/oauth/google-callback')
+        .query({})
+        .set('Cookie', [`pkce_verifier=${validVerifier}`, `google_state=${validState}`]);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+
+    // =============================
+    // ❌ MISSING COOKIES
+    // =============================
+    it('should return 401 if state mismatch', async () => {
+      const res = await request(oauthCtx.app).get('/api/oauth/google-callback').query({ state: 'wrong-state' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+    });
+    // =============================
+    // ❌ GOOGLE TOKEN INVALID
+    // =============================
+    it('should return 500 if google token invalid', async () => {
+      oauthCtx.googleProvider.verifyGoogleToken.mockRejectedValue(new Error('Invalid Google token'));
+      const res = await request(oauthCtx.app)
+        .get('/api/oauth/google-callback')
+        .query({ state: validState, code: validCode })
+        .set('Cookie', [`pkce_verifier=${validVerifier}`, `google_state=${validState}`]);
+
+      expect(res.status).toBe(500);
+      expect(res.body.success).toBe(false);
+    });
+    // =============================
+    // ❌ EMAIL NOT VERIFIED
+    // =============================
+    it('should return 400 if email not verified', async () => {
+      oauthCtx.googleProvider.verifyGoogleToken.mockResolvedValue({ ...validPayload, email_verified: false });
+      const res = await request(oauthCtx.app)
+        .get('/api/oauth/google-callback')
+        .query({ state: validState, code: validCode })
+        .set('Cookie', [`pkce_verifier=${validVerifier}`, `google_state=${validState}`]);
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
     });
   });
 });

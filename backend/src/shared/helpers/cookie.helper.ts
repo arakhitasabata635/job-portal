@@ -29,7 +29,7 @@ export const extractTokenFromCookie = (req: Request, tokenName: string): string 
   const token = req.cookies?.[tokenName];
 
   if (!token) {
-    throw new AppError(401, `${tokenName} is missing.`);
+    throw new AppError(404, `${tokenName} is missing.`);
   }
   return token;
 };
